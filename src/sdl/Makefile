@@ -119,6 +119,8 @@ image_o      := $(build)/image.o
 object_files += $(image_o)
 
 image_dep := $(image_h)
+image_dep += $(image)/stb_image.h
+image_dep += $(image)/stb_include.hpp
 
 #************
 

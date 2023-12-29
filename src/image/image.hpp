@@ -31,3 +31,11 @@ namespace image
 {
     void fill(Image const& image, Pixel color);
 }
+
+
+/* read */
+
+namespace image
+{
+    bool read_image_from_file(const char* img_path_src, Image& image_dst);
+}
