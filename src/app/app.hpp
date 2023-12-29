@@ -7,13 +7,17 @@ namespace app
     constexpr auto APP_TITLE = "SDL2 Demo";
 
 
-    class  ScreenBuffer
-	{
-	public:
-		void* memory;
-		u32 width;
-		u32 height;
-		u32 bytes_per_pixel;
-	};
+    class AppState
+    {
+    public:
+        Image screen_image;
+    };
+
+
+    bool init(AppState& state);
+
+    void update(AppState& state, input::Input const& input);
+
+    void close(AppState& state);
 
 }

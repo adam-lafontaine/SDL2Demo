@@ -15,6 +15,7 @@ src   := $(root)/src
 util  := $(src)/util
 input := $(src)/input
 sdl   := $(src)/sdl
+app   := $(src)/app
 
 exe := sdl_app
 
@@ -39,6 +40,9 @@ input_state_h += $(input_h)
 sdl_include_h := $(sdl)/sdl_include.hpp
 sdl_include_h += $(input_h)
 
+app_h := $(app)/app.hpp
+app_h += $(input_h)
+
 
 main_c         := $(sdl)/sdl_main.cpp
 main_o         := $(build)/main.o
@@ -48,13 +52,19 @@ main_dep := $(sdl_include_h)
 main_dep += $(stopwatch_h)
 
 
-sdl_input_c := $(sdl)/sdl_input.cpp
-sdl_input_o := $(build)/sdl_input.o
+sdl_input_c  := $(sdl)/sdl_input.cpp
+sdl_input_o  := $(build)/sdl_input.o
 object_files += $(sdl_input_o)
 
 sdl_input_dep := $(sdl_include_h)
 sdl_input_dep += $(input_state_h)
 
+
+app_c        := $(app)/app.cpp
+app_o        := $(build)/app.
+object_files += $(app_o)
+
+app_dep := $(app_h)
 
 
 $(main_o): $(main_c) $(main_dep)
@@ -65,6 +75,11 @@ $(main_o): $(main_c) $(main_dep)
 $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)
 	@echo "sdl_input"
 	$(GPP) -o $@ -c $< $(SDL2)
+
+
+$(app_o): $(app_c) $(app_dep)
+	@echo "app"
+	$(GPP) -o $@ -c $< $(TBB)
 
 
 $(program_exe): $(object_files)

@@ -6,8 +6,6 @@
 
 
 constexpr auto WINDOW_TITLE = app::APP_TITLE;
-constexpr u32 WINDOW_HEIGHT = 480;
-constexpr u32 WINDOW_WIDTH = 600;
 
 constexpr f64 TARGET_FRAMERATE_HZ = 60.0f;
 constexpr f64 TARGET_NS_PER_FRAME = 1'000'000.0 / TARGET_FRAMERATE_HZ;
@@ -87,17 +85,29 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    sdl::ScreenMemory screen{};
-    if(!create_screen_memory(screen, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT))
+    app::AppState app_state{};
+    if (!app::init(app_state))
     {
+        print_message("Error: app::init()");
+        sdl::close();
         return EXIT_FAILURE;
     }
+
+    sdl::ScreenMemory screen{};
+    if(!create_screen_memory(screen, WINDOW_TITLE, app_state.screen_image.width, app_state.screen_image.height))
+    {
+        sdl::close();
+        return EXIT_FAILURE;
+    }
+
+    app_state.screen_image = screen.image;
 
     input::Input input[2] = {};
     sdl::ControllerInput controller_input = {};
 
     auto const cleanup = [&]()
     {
+        app::close(app_state);
         sdl::close_game_controllers(controller_input, input[0]);
         sdl::close();
     };

@@ -28,7 +28,7 @@ static void print_message(const char* msg)
 
 namespace sdl
 {
-    constexpr u32 SCREEN_BYTES_PER_PIXEL = sizeof(u32);
+    constexpr u32 SCREEN_BYTES_PER_PIXEL = sizeof(Pixel);
 
     constexpr auto MAX_CONTROLLERS = input::MAX_CONTROLLERS;
 
@@ -262,7 +262,7 @@ namespace sdl
         SDL_Renderer* renderer = nullptr;
         SDL_Texture* texture = nullptr;
 
-        Matrix2D<u32> image;
+        Image image;
     };
 
 
@@ -333,7 +333,7 @@ namespace sdl
             return false;
         }
 
-        screen.image.data_ = (u32*)malloc((size_t)(SCREEN_BYTES_PER_PIXEL * width * height));
+        screen.image.data_ = (Pixel*)malloc((size_t)(SCREEN_BYTES_PER_PIXEL * width * height));
 
         if(!screen.image.data_)
         {
