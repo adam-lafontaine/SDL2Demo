@@ -10,7 +10,7 @@ namespace app
     class AppState
     {
     public:
-        Image screen_image;
+        ImageView screen_view;
 
         Pixel screen_color;
     };

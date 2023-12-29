@@ -2,6 +2,8 @@
 
 #include "button_state.hpp"
 
+#define SINGLE_CONTROLLER 1
+
 
 #define CONTROLLER_BTN_DPAD_UP 1
 #define CONTROLLER_BTN_DPAD_DOWN 1

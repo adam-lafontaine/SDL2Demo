@@ -19,9 +19,9 @@ namespace image
 	}
 
 
-    void fill(Image const& image, Pixel color)
+    void fill(ImageView const& view, Pixel color)
     {
-        fill_span(image.data_, color, image.width * image.height);
+        fill_span(view.matrix_data_, color, view.width * view.height);
     }
 }
 

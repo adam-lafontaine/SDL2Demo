@@ -50,6 +50,18 @@ public:
 };
 
 
+template <typename T>
+class MatrixView2D
+{
+public:
+
+	T* matrix_data_ = 0;
+
+	u32 width = 0;
+	u32 height = 0;
+};
+
+
 class RGBAu8
 {
 public:
@@ -80,3 +92,4 @@ using Rect2Df64 = Rect2D<f64>;
 
 using Pixel = RGBAu8;
 using Image = Matrix2D<Pixel>;
+using ImageView = MatrixView2D<Pixel>;

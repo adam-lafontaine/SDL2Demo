@@ -102,14 +102,14 @@ int main(int argc, char *argv[])
     }
 
     sdl::ScreenMemory screen{};
-    if(!sdl::create_screen_memory(screen, WINDOW_TITLE, app_state.screen_image.width, app_state.screen_image.height))
+    if(!sdl::create_screen_memory(screen, WINDOW_TITLE, app_state.screen_view.width, app_state.screen_view.height))
     {
         print_message("Error: sdl::create_screen_memory()");
         sdl::close();
         return EXIT_FAILURE;
     }
 
-    app_state.screen_image.data_ = screen.image.data_;
+    app_state.screen_view.matrix_data_ = screen.image.data_;
 
     input::Input input[2] = {};
     sdl::ControllerInput controller_input = {};

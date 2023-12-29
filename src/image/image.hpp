@@ -29,7 +29,7 @@ namespace image
 
 namespace image
 {
-    void fill(Image const& image, Pixel color);
+    void fill(ImageView const& image, Pixel color);
 }
 
 
