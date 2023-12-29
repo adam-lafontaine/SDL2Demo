@@ -1,12 +1,13 @@
 #include "sdl_include.hpp"
 #include "../util/stopwatch.hpp"
+#include "../app/app.hpp"
 
 #include <thread>
 
 
-constexpr auto WINDOW_TITLE = "Window Title";
-constexpr int WINDOW_HEIGHT = 480;
-constexpr int WINDOW_WIDTH = 600;
+constexpr auto WINDOW_TITLE = app::APP_TITLE;
+constexpr u32 WINDOW_HEIGHT = 480;
+constexpr u32 WINDOW_WIDTH = 600;
 
 constexpr f64 TARGET_FRAMERATE_HZ = 60.0f;
 constexpr f64 TARGET_NS_PER_FRAME = 1'000'000.0 / TARGET_FRAMERATE_HZ;
