@@ -126,10 +126,10 @@ int main(int argc, char *argv[])
         }
 #endif
 */
-        auto sleep_ns = (u32)(TARGET_NS_PER_FRAME - frame_ns_elapsed);
+        auto sleep_ns = TARGET_NS_PER_FRAME - frame_ns_elapsed;
         if (sleep_ns > 0)
         { 
-            std::this_thread::sleep_for(std::chrono::nanoseconds(sleep_ns));
+            std::this_thread::sleep_for(std::chrono::nanoseconds((i64)(sleep_ns)));
             while (frame_ns_elapsed < TARGET_NS_PER_FRAME)
             {
                 frame_ns_elapsed = sw.get_time_nano();

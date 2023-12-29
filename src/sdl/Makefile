@@ -9,11 +9,12 @@ TBB := -ltbb
 
 ALL_LFLAGS := $(SDL2) $(TBB)
 
-root  := ..
+root  := ../..
 build := $(root)/build/sdl
-util  := $(root)/util
-input := $(root)/input
-sdl   := $(root)/sdl
+src   := $(root)/src
+util  := $(src)/util
+input := $(src)/input
+sdl   := $(src)/sdl
 
 exe := sdl_app
 
