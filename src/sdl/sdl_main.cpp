@@ -102,8 +102,9 @@ int main(int argc, char *argv[])
     }
 
     sdl::ScreenMemory screen{};
-    if(!create_screen_memory(screen, WINDOW_TITLE, app_state.screen_image.width, app_state.screen_image.height))
+    if(!sdl::create_screen_memory(screen, WINDOW_TITLE, app_state.screen_image.width, app_state.screen_image.height))
     {
+        print_message("Error: sdl::create_screen_memory()");
         sdl::close();
         return EXIT_FAILURE;
     }
@@ -133,46 +134,11 @@ int main(int argc, char *argv[])
     f64 ns_elapsed = 0.0;
 
 #ifndef NDEBUG
-    constexpr f64 title_refresh_ns = NANO * 0.5;
+    constexpr f64 title_refresh_ns = NANO * 0.25;
     constexpr int TITLE_LEN = 50;
     char dbg_title[TITLE_LEN] = { 0 };
     int frame_milli = 0;
-
 #endif
-
-    auto const wait_for_framerate = [&]()
-    {
-        frame_nano = sw.get_time_nano();
-
-#ifndef NDEBUG
-        frame_milli = (int)(frame_nano / 1'000'000 + 0.5);
-#endif
-
-        auto sleep_ns = TARGET_NS_PER_FRAME - frame_nano;
-        if (sleep_ns > 0)
-        { 
-            std::this_thread::sleep_for(std::chrono::nanoseconds((i64)(sleep_ns)));
-            while (frame_nano < TARGET_NS_PER_FRAME)
-            {
-                frame_nano = sw.get_time_nano();
-            }        
-        }
-
-        ns_elapsed += frame_nano;
-
-        sw.start();
-
-#ifndef NDEBUG
-        if(ns_elapsed >= title_refresh_ns)
-        {
-            auto fps = (int)(NANO / frame_nano + 0.5);
-            qsnprintf(dbg_title, TITLE_LEN, "%s (%d fps / %d ms)", WINDOW_TITLE, fps, frame_milli);
-            SDL_SetWindowTitle(screen.window, dbg_title);
-
-            ns_elapsed = 0.0;
-        }
-#endif        
-    };
 
     g_running = true;
 
@@ -204,11 +170,42 @@ int main(int argc, char *argv[])
         input::process_controller_input(controller_input, input_prev, input_curr);
 
         // does not miss frames but slows animation
-        input_curr.dt_frame = (f32)(TARGET_NS_PER_FRAME / 1'000'000);
+        input_curr.dt_frame = (f32)(1.0 / TARGET_FRAMERATE_HZ);
 
         app::update(app_state, input_curr);
 
-        wait_for_framerate();
+        // track frame rate
+        frame_nano = sw.get_time_nano();
+
+#ifndef NDEBUG
+        frame_milli = (int)(frame_nano / 1'000'000 + 0.5);
+#endif
+
+        auto sleep_ns = TARGET_NS_PER_FRAME - frame_nano;
+        if (sleep_ns > 0)
+        { 
+            std::this_thread::sleep_for(std::chrono::nanoseconds((i64)(sleep_ns)));
+            while (frame_nano < TARGET_NS_PER_FRAME)
+            {
+                frame_nano = sw.get_time_nano();
+            }        
+        }
+
+        ns_elapsed += frame_nano;
+
+        sw.start();
+
+#ifndef NDEBUG
+        if(ns_elapsed >= title_refresh_ns)
+        {
+            auto fps = (int)(NANO / frame_nano + 0.5);
+            qsnprintf(dbg_title, TITLE_LEN, "%s (%d fps / %d ms)", WINDOW_TITLE, fps, frame_milli);
+            SDL_SetWindowTitle(screen.window, dbg_title);
+
+            ns_elapsed = 0.0;
+        }
+#endif
+
         sdl::render_screen(screen);
 
         frame_prev = frame_curr;
