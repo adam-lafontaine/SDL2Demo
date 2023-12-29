@@ -23,6 +23,7 @@ namespace app
 
         img::fill(screen, img::to_pixel(0, 255, 0));
     }
+    
 
     void close(AppState& state)
     {

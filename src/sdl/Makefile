@@ -26,8 +26,11 @@ program_exe := $(build)/$(exe)
 
 #*** util ***
 
+qsprintf := $(util)/qsprintf
+
+types_h     := $(util)/types.hpp
 stopwatch_h := $(util)/stopwatch.hpp
-types_h := $(util)/types.hpp
+qsprintf_h  := $(qsprintf)/qsprintf.hpp
 
 #***********
 
@@ -85,6 +88,18 @@ main_dep += $(stopwatch_h)
 #************
 
 
+#*** util ***
+
+util_c       := $(util)/util.cpp
+util_o       := $(build)/util.o
+object_files += $(util_o)
+
+util_dep := $(qsprintf_h)
+util_dep += $(qsprintf)/qsprintf.cpp
+
+#************
+
+
 #*** sdl ***
 
 sdl_input_c  := $(sdl)/sdl_input.cpp
@@ -111,7 +126,7 @@ image_dep := $(image_h)
 #*** app ***
 
 app_c        := $(app)/app.cpp
-app_o        := $(build)/app.
+app_o        := $(build)/app.o
 object_files += $(app_o)
 
 app_dep := $(app_h)
@@ -120,27 +135,32 @@ app_dep := $(app_h)
 
 
 $(main_o): $(main_c) $(main_dep)
-	@echo "main"
+	@echo "\n  main"
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
+$(util_o): $(util_c) $(util_dep)
+	@echo "\n  util"
+	$(GPP) -o $@ -c $< $(NO_FLAGS)
+
+
 $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)
-	@echo "sdl_input"
+	@echo "\n  sdl_input"
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
 $(app_o): $(app_c) $(app_dep)
-	@echo "app"
+	@echo "\n  app"
 	$(GPP) -o $@ -c $< $(TBB)
 
 
 $(image_o): $(image_c) $(image_dep)
-	@echo "image"
+	@echo "\n  image"
 	$(GPP) -o $@ -c $< $(NO_FLAGS)
 
 
 $(program_exe): $(object_files)
-	@echo "\n $(exe)"
+	@echo "\n  program_exe"
 	$(GPP) -o $@ $+ $(ALL_LFLAGS)
 
 
