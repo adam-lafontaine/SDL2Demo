@@ -184,6 +184,8 @@ int main(int argc, char *argv[])
         // does not miss frames but slows animation
         input_curr.dt_frame = (f32)(TARGET_NS_PER_FRAME / 1'000'000);
 
+        app::update(app_state, input_curr);
+
         wait_for_framerate();
         sdl::render_screen(screen);
 

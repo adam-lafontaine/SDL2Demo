@@ -1,4 +1,7 @@
 #include "app.hpp"
+#include "../image/image.hpp"
+
+namespace img = image;
 
 
 namespace app
@@ -16,7 +19,9 @@ namespace app
 
     void update(AppState& state, input::Input const& input)
     {
+        auto& screen = state.screen_image;
 
+        img::fill(screen, img::to_pixel(0, 255, 0));
     }
 
     void close(AppState& state)
