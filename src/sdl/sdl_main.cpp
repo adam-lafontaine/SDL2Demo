@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    app_state.screen_image = screen.image;
+    app_state.screen_image.data_ = screen.image.data_;
 
     input::Input input[2] = {};
     sdl::ControllerInput controller_input = {};

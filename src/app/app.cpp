@@ -13,6 +13,8 @@ namespace app
         screen.height = 450;
         screen.width = 800;
 
+        state.screen_color = img::to_pixel(0, 255, 0);
+
         return true;
     }
 
@@ -21,9 +23,9 @@ namespace app
     {
         auto& screen = state.screen_image;
 
-        img::fill(screen, img::to_pixel(0, 255, 0));
+        img::fill(screen, state.screen_color);
     }
-    
+
 
     void close(AppState& state)
     {

@@ -11,6 +11,8 @@ namespace app
     {
     public:
         Image screen_image;
+
+        Pixel screen_color;
     };
 
 
