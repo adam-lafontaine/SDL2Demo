@@ -199,9 +199,7 @@ namespace sdl
     static void set_window_icon(SDL_Window* window)
     {
         // https://blog.gibson.sh/2015/04/13/how-to-integrate-your-sdl2-window-icon-or-any-image-into-your-executable/
-
-        
-    
+   
 #include "../resources/icon_64.c" // this will "paste" the struct my_icon into this function
 
     // these masks are needed to tell SDL_CreateRGBSurface(From)

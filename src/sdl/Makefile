@@ -84,6 +84,7 @@ object_files   := $(main_o)
 
 main_dep := $(sdl_include_h)
 main_dep += $(stopwatch_h)
+main_dep += $(app_h)
 
 #************
 

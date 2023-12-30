@@ -9,6 +9,7 @@
 #endif
 
 #include <thread>
+#include <cassert>
 
 
 constexpr auto WINDOW_TITLE = app::APP_TITLE;
@@ -101,8 +102,21 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    auto window_width = app_state.screen_view.width;
+    auto window_height = app_state.screen_view.height;
+
+    assert(window_width);
+    assert(window_height);
+
+    if (!window_width || !window_height)
+    {
+        print_message("Error: app::init()");
+        sdl::close();
+        return EXIT_FAILURE;
+    }
+
     sdl::ScreenMemory screen{};
-    if(!sdl::create_screen_memory(screen, WINDOW_TITLE, app_state.screen_view.width, app_state.screen_view.height))
+    if(!sdl::create_screen_memory(screen, WINDOW_TITLE, window_width, window_height))
     {
         print_message("Error: sdl::create_screen_memory()");
         sdl::close();

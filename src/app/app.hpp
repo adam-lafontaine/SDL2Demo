@@ -7,12 +7,15 @@ namespace app
     constexpr auto APP_TITLE = "SDL2 Demo";
 
 
+    class StateData;
+
+
     class AppState
     {
     public:
         ImageView screen_view;
 
-        Pixel screen_color;
+        StateData* data_ = nullptr;
     };
 
 

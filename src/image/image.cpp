@@ -4,6 +4,50 @@
 #include <cassert>
 #include <cstring>
 
+#ifndef NDEBUG
+#include <cstdio>
+#else
+#define printf(fmt, ...)
+#endif
+
+
+/* create destroy */
+
+namespace image
+{
+    bool create_image(Image& image, u32 width, u32 height)
+	{
+		assert(width);
+		assert(height);
+
+		image.data_ = (Pixel*)std::malloc(width * height * sizeof(Pixel));
+		if (!image.data_)
+		{
+			return false;
+		}
+
+		assert(image.data_ && "create_image()");
+
+        image.width = width;
+        image.height = height;
+
+		return true;
+	}
+
+    
+    void destroy_image(Image& image)
+    {
+        if (image.data_)
+		{
+			std::free(image.data_);
+			image.data_ = nullptr;
+		}
+
+		image.width = 0;
+		image.height = 0;
+    }
+}
+
 
 /* fill */
 
@@ -22,6 +66,33 @@ namespace image
     void fill(ImageView const& view, Pixel color)
     {
         fill_span(view.matrix_data_, color, view.width * view.height);
+    }
+}
+
+
+/* copy */
+
+namespace image
+{
+    template <typename T>
+    static inline void copy_span(T* src, T* dst, u32 len)
+    {
+        for (u32 i = 0; i < len; ++i)
+		{
+			dst[i] = src[i];
+		}
+    }
+
+
+
+    void copy(Image const& src, ImageView const& dst)
+    {
+        assert(src.data_);
+        assert(dst.matrix_data_);
+        assert(src.width == dst.width);
+        assert(src.height == dst.height);
+
+        copy_span(src.data_, dst.matrix_data_, src.width * src.height);
     }
 }
 

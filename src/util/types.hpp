@@ -73,6 +73,16 @@ public:
 
 
 template <typename T>
+class DataResult
+{
+public:
+	T data;
+	bool success = false;
+	cstr message = 0;
+};
+
+
+template <typename T>
 using Point2D = Vec2D<T>;
 
 using Vec2Di32 = Vec2D<i32>;

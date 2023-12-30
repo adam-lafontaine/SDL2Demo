@@ -2,6 +2,8 @@
 
 #include "../util/types.hpp"
 
+#include <filesystem>
+
 
 
 namespace image
@@ -25,6 +27,16 @@ namespace image
 }
 
 
+/* create destroy */
+
+namespace image
+{
+    bool create_image(Image& image, u32 width, u32 height);
+
+    void destroy_image(Image& image);
+}
+
+
 /* fill */
 
 namespace image
@@ -33,9 +45,26 @@ namespace image
 }
 
 
+/* copy */
+
+namespace image
+{
+    void copy(Image const& src, ImageView const& dst);
+}
+
+
 /* read */
 
 namespace image
 {
+    using path = std::filesystem::path;
+
+
     bool read_image_from_file(const char* img_path_src, Image& image_dst);
+
+
+    inline bool read_image_from_file(path const& img_path_src, Image& image_dst)
+	{
+		return read_image_from_file(img_path_src.string().c_str(), image_dst);
+	}
 }
