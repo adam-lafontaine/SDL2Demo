@@ -31,6 +31,8 @@ namespace image
 
 namespace image
 {
+    ImageView make_view(Image const& image);
+
     bool create_image(Image& image, u32 width, u32 height);
 
     void destroy_image(Image& image);
@@ -49,7 +51,7 @@ namespace image
 
 namespace image
 {
-    void copy(Image const& src, ImageView const& dst);
+    void copy(ImageView const& src, ImageView const& dst);
 }
 
 
@@ -57,7 +59,15 @@ namespace image
 
 namespace image
 {
-    void alpha_blend(Image const& src, ImageView const& dst);
+    void alpha_blend(ImageView const& src, ImageView const& dst);
+}
+
+
+/* scale */
+
+namespace image
+{
+    void scale_up(ImageView const& src, ImageView const& dst, u32 scale);
 }
 
 

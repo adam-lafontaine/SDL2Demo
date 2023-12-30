@@ -61,14 +61,31 @@ namespace
 
     const auto KEYBOARD_IMAGE_PATH = ASSETS_DIR / "keyboard.png";
 
-    DataResult<Image> load_keyboard_image()
+
+    bool load_keyboard_image(app::StateData& state_data)
     {
-        DataResult<Image> result;
-        result.success = img::read_image_from_file(KEYBOARD_IMAGE_PATH, result.data);
+        Image raw_image{};
+        if (!img::read_image_from_file(KEYBOARD_IMAGE_PATH, raw_image))
+        {
+            return false;
+        }
 
-        assert(result.success && "Error load_keyboard_image()");
+        Image keyboard{};
+        constexpr u32 scale = 2;
 
-        return result;
+        if (!img::create_image(keyboard, raw_image.width * scale, raw_image.height * scale))
+        {
+            img::destroy_image(raw_image);
+            return false;
+        }
+
+        img::scale_up(img::make_view(raw_image), img::make_view(keyboard), scale);
+
+        state_data.keyboard = keyboard;
+
+        img::destroy_image(raw_image);
+
+        return true;
     }
 }
 
@@ -79,7 +96,7 @@ namespace
 {
     void render_keyboard(app::StateData const& state, ImageView const& screen)
     {
-        img::alpha_blend(state.keyboard, screen);
+        img::alpha_blend(img::make_view(state.keyboard), screen);
     }
 }
 
@@ -96,16 +113,11 @@ namespace app
         }
 
         auto& state_data = *state.data_;
-
-        auto keyboard_result = load_keyboard_image();
-        if (!keyboard_result.success)
+        
+        if (!load_keyboard_image(state_data))
         {
             return false;
         }
-
-        auto& raw_keyboard_image = keyboard_result.data;
-
-        state_data.keyboard = keyboard_result.data;
 
         u32 screen_width = state_data.keyboard.width;
         u32 screen_height = state_data.keyboard.height;

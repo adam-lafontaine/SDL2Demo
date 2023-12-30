@@ -11,10 +11,34 @@
 #endif
 
 
+/* row_begin */
+
+namespace image
+{
+    template <typename T>
+	static inline T* row_begin(MatrixView2D<T> const& view, u32 y)
+	{
+		return view.matrix_data_ + (u64)(y * view.width);
+	}
+}
+
+
 /* create destroy */
 
 namespace image
 {
+    ImageView make_view(Image const& image)
+    {
+        ImageView view{};
+
+        view.width = image.width;
+        view.height = image.height;
+        view.matrix_data_ = image.data_;
+
+        return view;
+    }
+
+
     bool create_image(Image& image, u32 width, u32 height)
 	{
 		assert(width);
@@ -85,14 +109,14 @@ namespace image
 
 
 
-    void copy(Image const& src, ImageView const& dst)
+    void copy(ImageView const& src, ImageView const& dst)
     {
-        assert(src.data_);
+        assert(src.matrix_data_);
         assert(dst.matrix_data_);
         assert(src.width == dst.width);
         assert(src.height == dst.height);
 
-        copy_span(src.data_, dst.matrix_data_, src.width * src.height);
+        copy_span(src.matrix_data_, dst.matrix_data_, src.width * src.height);
     }
 }
 
@@ -124,14 +148,47 @@ namespace image
     }
 
 
-    void alpha_blend(Image const& src, ImageView const& dst)
+    void alpha_blend(ImageView const& src, ImageView const& dst)
     {
-        assert(src.data_);
+        assert(src.matrix_data_);
         assert(dst.matrix_data_);
         assert(src.width == dst.width);
         assert(src.height == dst.height);
-        
-        alpha_blend_span(src.data_, dst.matrix_data_, src.width * src.height);
+
+        alpha_blend_span(src.matrix_data_, dst.matrix_data_, src.width * src.height);
+    }
+}
+
+
+/* scale */
+
+namespace image
+{
+    void scale_up(ImageView const& src, ImageView const& dst, u32 scale)
+    {
+        assert(src.matrix_data_);
+        assert(dst.matrix_data_);
+        assert(dst.width == src.width * scale);
+        assert(dst.height == src.height * scale);
+
+        for (u32 src_y = 0; src_y < src.height; src_y++)
+        {
+            auto src_row = row_begin(src, src_y);
+            for (u32 src_x = 0; src_x < src.width; src_x++)
+            {
+                auto const s = src_row[src_x];
+                for (u32 offset_y = 0; offset_y < scale; offset_y++)
+                {
+                    auto dst_y = src_y * scale + offset_y;
+                    auto dst_row = row_begin(dst, dst_y);
+                    for (u32 offset_x = 0; offset_x < scale; offset_x++)
+                    {
+                        auto dst_x = src_x * scale + offset_x;
+                        dst_row[dst_x] = s;
+                    }
+                }
+            }
+        }
     }
 }
 
