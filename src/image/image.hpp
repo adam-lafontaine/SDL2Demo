@@ -53,6 +53,14 @@ namespace image
 }
 
 
+/* blend */
+
+namespace image
+{
+    void alpha_blend(Image const& src, ImageView const& dst);
+}
+
+
 /* read */
 
 namespace image

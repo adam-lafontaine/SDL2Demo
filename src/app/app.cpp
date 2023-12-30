@@ -79,7 +79,7 @@ namespace
 {
     void render_keyboard(app::StateData const& state, ImageView const& screen)
     {
-        img::copy(state.keyboard, screen);
+        img::alpha_blend(state.keyboard, screen);
     }
 }
 
@@ -103,6 +103,8 @@ namespace app
             return false;
         }
 
+        auto& raw_keyboard_image = keyboard_result.data;
+
         state_data.keyboard = keyboard_result.data;
 
         u32 screen_width = state_data.keyboard.width;
@@ -124,7 +126,7 @@ namespace app
         auto& screen = state.screen_view;
         auto& state_data = *state.data_;
 
-        //img::fill(screen, state_data.screen_color);
+        img::fill(screen, state_data.screen_color);
         render_keyboard(state_data, screen);
     }
 

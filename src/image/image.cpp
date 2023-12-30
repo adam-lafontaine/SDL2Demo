@@ -97,6 +97,45 @@ namespace image
 }
 
 
+/* blend */
+
+namespace image
+{
+    static inline u8 blend_linear(u8 s, u8 c, f32 a)
+	{
+		auto blended = a * s + (1.0f - a) * c;
+		return (u8)(blended + 0.5);
+	}
+
+
+    static inline void alpha_blend_span(Pixel* src, Pixel* dst, u32 len)
+    {
+        for (u32 i = 0; i < len; ++i)
+        {
+            auto const s = src[i];
+            auto& d = dst[i];
+
+            auto a = s.alpha / 255.0f;
+
+            d.red = blend_linear(s.red, d.red, a);
+            d.green = blend_linear(s.green, d.green, a);
+            d.blue = blend_linear(s.blue, d.blue, a);
+        }
+    }
+
+
+    void alpha_blend(Image const& src, ImageView const& dst)
+    {
+        assert(src.data_);
+        assert(dst.matrix_data_);
+        assert(src.width == dst.width);
+        assert(src.height == dst.height);
+        
+        alpha_blend_span(src.data_, dst.matrix_data_, src.width * src.height);
+    }
+}
+
+
 /* read */
 
 namespace image
