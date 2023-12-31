@@ -20,6 +20,12 @@ namespace image
 	{
 		return view.matrix_data_ + (u64)(y * view.width);
 	}
+
+
+    static inline Pixel* row_begin(ImageSubView const& view, u32 y)
+    {
+        return view.matrix_data_ + (u64)((view.y_begin + y) * view.matrix_width + view.x_begin);
+    }
 }
 
 
@@ -93,6 +99,25 @@ namespace image
 }
 
 
+/* sub_view */
+
+namespace image
+{
+    ImageSubView sub_view(ImageView const& view, Rect2Du32 const& range)
+    {
+        ImageSubView sub_view{};
+
+        sub_view.matrix_data_ = view.matrix_data_;
+        sub_view.matrix_width = view.width;
+        sub_view.range = range;
+        sub_view.width = range.x_end - range.x_begin;
+        sub_view.height = range.y_end - range.y_begin;
+
+        return sub_view;
+    }
+}
+
+
 /* fill */
 
 namespace image
@@ -110,6 +135,17 @@ namespace image
     void fill(ImageView const& view, Pixel color)
     {
         fill_span(view.matrix_data_, color, view.width * view.height);
+    }
+
+
+    void fill(ImageSubView const& view, Pixel color)
+    {
+        Pixel* dst = 0;
+
+        for (u32 y = 0; y < view.height; y++)
+        {
+            fill_span(row_begin(view, y), color, view.width);
+        }
     }
 }
 

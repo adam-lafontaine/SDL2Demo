@@ -60,11 +60,46 @@ namespace image
 }
 
 
+/* sub_view */
+
+namespace image
+{
+    class ImageSubView
+    {
+    public:
+        Pixel* matrix_data_;
+		u32 matrix_width;
+
+		u32 width;
+		u32 height;
+
+        union
+        {
+            Rect2Du32 range;
+
+            struct
+			{
+				u32 x_begin;
+				u32 x_end;
+				u32 y_begin;
+				u32 y_end;
+			};
+        };
+        
+    };
+
+
+    ImageSubView sub_view(ImageView const& image, Rect2Du32 const& range);
+}
+
+
 /* fill */
 
 namespace image
 {
-    void fill(ImageView const& image, Pixel color);
+    void fill(ImageView const& view, Pixel color);
+
+    void fill(ImageSubView const& view, Pixel color);
 }
 
 

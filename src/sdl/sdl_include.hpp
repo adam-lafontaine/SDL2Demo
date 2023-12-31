@@ -323,7 +323,7 @@ namespace sdl
 
         screen.texture =  SDL_CreateTexture(
             screen.renderer,
-            SDL_PIXELFORMAT_ARGB8888,
+            SDL_PIXELFORMAT_ABGR8888,
             SDL_TEXTUREACCESS_STREAMING,
             width,
             height);
