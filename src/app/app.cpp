@@ -13,6 +13,69 @@ namespace img = image;
 namespace fs = std::filesystem;
 
 
+
+/* image files */
+
+namespace kb
+{
+    constexpr auto ROOT = "/home/adam/Repos/SDL2Demo";
+
+    const auto ROOT_DIR = fs::path(ROOT);
+    const auto ASSETS_DIR = ROOT_DIR / "assets";
+
+    const auto KEYBOARD_IMAGE_PATH = ASSETS_DIR / "keyboard.png";
+
+
+    static inline bool load_keyboard_image(Image& image)
+    {
+        return img::read_image_from_file(KEYBOARD_IMAGE_PATH, image);
+    }
+
+
+    class KeyDim
+    {
+    public:
+        u16 x;
+        u16 y;
+        u16 width;
+        u16 height;
+    };
+
+
+    static constexpr KeyDim to_key_dim(u16 x, u16 y, u16 width, u16 height)
+    {
+        KeyDim kd{};
+
+        kd.x = x;
+        kd.y = y;
+        kd.width = width;
+        kd.height = height;
+
+        return kd;
+    }
+
+
+    static constexpr KeyDim key_dim_1() { return to_key_dim( 44,   8,  28, 28); }
+    static constexpr KeyDim key_dim_2() { return to_key_dim( 80,   8,  28, 28); }
+    static constexpr KeyDim key_dim_3() { return to_key_dim(116,   8,  28, 28); }
+    static constexpr KeyDim key_dim_4() { return to_key_dim(152,   8,  28, 28); }
+    static constexpr KeyDim key_dim_5() { return to_key_dim(188,   8,  28, 28); }
+    static constexpr KeyDim key_dim_6() { return to_key_dim(224,   8,  28, 28); }
+    static constexpr KeyDim key_dim_7() { return to_key_dim(260,   8,  28, 28); }
+    static constexpr KeyDim key_dim_8() { return to_key_dim(296,   8,  28, 28); }
+    static constexpr KeyDim key_dim_9() { return to_key_dim(332,   8,  28, 28); }
+    static constexpr KeyDim key_dim_0() { return to_key_dim(368,   8,  28, 28); }
+    static constexpr KeyDim key_dim_w() { return to_key_dim( 98,  44,  28, 28); }
+    static constexpr KeyDim key_dim_a() { return to_key_dim( 72,  80,  28, 28); }
+    static constexpr KeyDim key_dim_s() { return to_key_dim(108,  80,  28, 28); }
+    static constexpr KeyDim key_dim_d() { return to_key_dim(144,  80,  28, 28); }
+    static constexpr KeyDim key_dim_space() { return to_key_dim(170, 152, 208, 28); }
+
+
+    
+}
+
+
 namespace app
 {
     class StateData
@@ -52,55 +115,6 @@ namespace app
 }
 
 
-/* image files */
-
-namespace
-{
-    constexpr auto ROOT = "/home/adam/Repos/SDL2Demo";
-
-    const auto ROOT_DIR = fs::path(ROOT);
-    const auto ASSETS_DIR = ROOT_DIR / "assets";
-
-    const auto KEYBOARD_IMAGE_PATH = ASSETS_DIR / "keyboard.png";
-
-
-    /*bool load_keyboard_image(app::StateData& state_data)
-    {
-        Image raw_image{};
-        if (!img::read_image_from_file(KEYBOARD_IMAGE_PATH, raw_image))
-        {
-            return false;
-        }
-
-        Image keyboard{};
-        constexpr u32 scale = 2;
-
-        if (!img::create_image(keyboard, raw_image.width * scale, raw_image.height * scale))
-        {
-            img::destroy_image(raw_image);
-            return false;
-        }
-
-        img::scale_up(img::make_view(raw_image), img::make_view(keyboard), scale);
-
-        state_data.keyboard = keyboard;
-
-        img::destroy_image(raw_image);
-
-        return true;
-    }
-*/
-
-    Image load_keyboard_image()
-    {
-        Image raw_image{};
-        img::read_image_from_file(KEYBOARD_IMAGE_PATH, raw_image);
-
-        return raw_image;
-    }
-}
-
-
 /* render */
 
 namespace
@@ -128,16 +142,16 @@ namespace app
 
         u32 total_pixels = 0;
         Image raw_keyboard;
-        if (!img::read_image_from_file(KEYBOARD_IMAGE_PATH, raw_keyboard))
+        if (!kb::load_keyboard_image(raw_keyboard))
         {
             printf("Error: load_keyboard_image()\n");
             return false;
         }
+
         constexpr u32 keyboard_scale = 2;
         auto const keyboard_width = raw_keyboard.width * keyboard_scale;
         auto const keyboard_height = raw_keyboard.height * keyboard_scale;
         total_pixels += keyboard_width * keyboard_height;
-
 
         auto& pixel_data = state_data.image_data;
         pixel_data = img::create_buffer32(total_pixels);
