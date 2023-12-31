@@ -3,6 +3,7 @@
 #include "../util/memory_buffer.hpp"
 
 #include <filesystem>
+#include <functional>
 
 
 namespace mb = memory_buffer;
@@ -127,6 +128,8 @@ namespace image
     void fill(ImageView const& view, Pixel color);
 
     void fill(ImageSubView const& view, Pixel color);
+
+    void fill_if(ImageSubView const& view, Pixel color, std::function<bool(Pixel)> const& pred);
 }
 
 

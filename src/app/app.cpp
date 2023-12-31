@@ -283,13 +283,18 @@ namespace
 {
     void render_keyboard(app::StateData const& state, ImageView const& screen)
     {
+        auto const not_black = [](Pixel p)
+        {
+            return p.red > 0 || p.green > 0 || p.blue > 0 || p.alpha == 0;
+        };
+
         auto& keys = state.keyboard_views;
         for (u32 i = 0; i < keys.count; i++)
         {
             auto color = keys.colors[i];
             auto view = keys.keys[i];
 
-            img::fill(view, color);
+            img::fill_if(view, color, not_black);
         }
 
         img::alpha_blend(state.keyboard, screen);

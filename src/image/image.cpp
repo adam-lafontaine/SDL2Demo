@@ -176,6 +176,22 @@ namespace image
             fill_span(row_begin(view, y), color, view.width);
         }
     }
+
+
+    void fill_if(ImageSubView const& view, Pixel color, std::function<bool(Pixel)> const& pred)
+    {
+        for (u32 y = 0; y < view.height; y++)
+        {
+            auto row = row_begin(view, y);
+            for (u32 x = 0; x < view.width; x++)
+            {
+                if (pred(row[x]))
+                {
+                    row[x] = color;
+                }
+            }
+        }
+    }
 }
 
 
