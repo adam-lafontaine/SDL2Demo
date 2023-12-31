@@ -32,6 +32,9 @@ types_h     := $(util)/types.hpp
 stopwatch_h := $(util)/stopwatch.hpp
 qsprintf_h  := $(qsprintf)/qsprintf.hpp
 
+memory_buffer_h := $(util)/memory_buffer.hpp
+memory_buffer_h += $(types_h)
+
 #***********
 
 
@@ -63,7 +66,7 @@ sdl_include_h += $(input_h)
 #*** image ***
 
 image_h := $(image)/image.hpp
-image_h += $(types_h)
+image_h += $(memory_buffer_h)
 
 #*************
 
@@ -133,6 +136,7 @@ app_o        := $(build)/app.o
 object_files += $(app_o)
 
 app_dep := $(app_h)
+app_dep += $(image_h)
 
 #************
 

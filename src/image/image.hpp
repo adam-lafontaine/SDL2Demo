@@ -1,9 +1,11 @@
 #pragma once
 
-#include "../util/types.hpp"
+#include "../util/memory_buffer.hpp"
 
 #include <filesystem>
 
+
+namespace mb = memory_buffer;
 
 
 namespace image
@@ -31,11 +33,30 @@ namespace image
 
 namespace image
 {
-    ImageView make_view(Image const& image);
-
     bool create_image(Image& image, u32 width, u32 height);
 
     void destroy_image(Image& image);
+
+
+    using Buffer32 = MemoryBuffer<Pixel>;
+
+
+	inline Buffer32 create_buffer32(u32 n_pixels)
+	{
+		Buffer32 buffer;
+		mb::create_buffer(buffer, n_pixels);
+		return buffer;
+	}
+}
+
+
+/* make_view */
+
+namespace image
+{
+    ImageView make_view(Image const& image);
+
+    ImageView make_view(u32 width, u32 height, Buffer32& buffer);
 }
 
 

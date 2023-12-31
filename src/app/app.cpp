@@ -1,7 +1,6 @@
 #include "app.hpp"
 #include "../image/image.hpp"
 
-#include <cassert>
 
 #ifndef NDEBUG
 #include <cstdio>
@@ -22,7 +21,9 @@ namespace app
 
         Pixel screen_color;
 
-        Image keyboard;
+        ImageView keyboard;
+
+        MemoryBuffer<Pixel> image_data;
     };
 
 
@@ -43,7 +44,8 @@ namespace app
     static void destroy_state_data(AppState& state)
     {
         auto& state_data = *state.data_;
-        img::destroy_image(state_data.keyboard);
+        
+        mb::destroy_buffer(state_data.image_data);
 
         std::free(state.data_);
     }
@@ -62,7 +64,7 @@ namespace
     const auto KEYBOARD_IMAGE_PATH = ASSETS_DIR / "keyboard.png";
 
 
-    bool load_keyboard_image(app::StateData& state_data)
+    /*bool load_keyboard_image(app::StateData& state_data)
     {
         Image raw_image{};
         if (!img::read_image_from_file(KEYBOARD_IMAGE_PATH, raw_image))
@@ -87,6 +89,15 @@ namespace
 
         return true;
     }
+*/
+
+    Image load_keyboard_image()
+    {
+        Image raw_image{};
+        img::read_image_from_file(KEYBOARD_IMAGE_PATH, raw_image);
+
+        return raw_image;
+    }
 }
 
 
@@ -96,7 +107,7 @@ namespace
 {
     void render_keyboard(app::StateData const& state, ImageView const& screen)
     {
-        img::alpha_blend(img::make_view(state.keyboard), screen);
+        img::alpha_blend(state.keyboard, screen);
     }
 }
 
@@ -109,15 +120,31 @@ namespace app
     {
         if (!create_state_data(state))
         {
+            printf("Error: create_state_data()\n");
             return false;
         }
 
         auto& state_data = *state.data_;
-        
-        if (!load_keyboard_image(state_data))
+
+        u32 total_pixels = 0;
+        Image raw_keyboard;
+        if (!img::read_image_from_file(KEYBOARD_IMAGE_PATH, raw_keyboard))
         {
+            printf("Error: load_keyboard_image()\n");
             return false;
         }
+        constexpr u32 keyboard_scale = 2;
+        auto const keyboard_width = raw_keyboard.width * keyboard_scale;
+        auto const keyboard_height = raw_keyboard.height * keyboard_scale;
+        total_pixels += keyboard_width * keyboard_height;
+
+
+        auto& pixel_data = state_data.image_data;
+        pixel_data = img::create_buffer32(total_pixels);
+
+        state_data.keyboard = img::make_view(keyboard_width, keyboard_height, pixel_data);        
+        img::scale_up(img::make_view(raw_keyboard), state_data.keyboard, keyboard_scale);
+        img::destroy_image(raw_keyboard);
 
         u32 screen_width = state_data.keyboard.width;
         u32 screen_height = state_data.keyboard.height;

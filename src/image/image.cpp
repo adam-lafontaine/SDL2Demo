@@ -27,18 +27,6 @@ namespace image
 
 namespace image
 {
-    ImageView make_view(Image const& image)
-    {
-        ImageView view{};
-
-        view.width = image.width;
-        view.height = image.height;
-        view.matrix_data_ = image.data_;
-
-        return view;
-    }
-
-
     bool create_image(Image& image, u32 width, u32 height)
 	{
 		assert(width);
@@ -63,12 +51,44 @@ namespace image
     {
         if (image.data_)
 		{
-			std::free(image.data_);
+			std::free((void*)image.data_);
 			image.data_ = nullptr;
 		}
 
 		image.width = 0;
 		image.height = 0;
+    }
+}
+
+
+/* make_view */
+
+namespace image
+{
+    ImageView make_view(Image const& image)
+    {
+        ImageView view{};
+
+        view.width = image.width;
+        view.height = image.height;
+        view.matrix_data_ = image.data_;
+
+        return view;
+    }
+
+
+    ImageView make_view(u32 width, u32 height, Buffer32& buffer)
+    {
+        ImageView view{};
+
+        view.matrix_data_ = mb::push_elements(buffer, width * height);
+        if (view.matrix_data_)
+        {
+            view.width = width;
+            view.height = height;
+        }
+
+        return view;
     }
 }
 
@@ -171,24 +191,31 @@ namespace image
         assert(dst.width == src.width * scale);
         assert(dst.height == src.height * scale);
 
+        u32 i = 0;
+
         for (u32 src_y = 0; src_y < src.height; src_y++)
         {
             auto src_row = row_begin(src, src_y);
             for (u32 src_x = 0; src_x < src.width; src_x++)
             {
                 auto const s = src_row[src_x];
-                for (u32 offset_y = 0; offset_y < scale; offset_y++)
+
+                auto dst_y = src_y * scale;
+                for (u32 offset_y = 0; offset_y < scale; offset_y++, dst_y++)
                 {
-                    auto dst_y = src_y * scale + offset_y;
                     auto dst_row = row_begin(dst, dst_y);
-                    for (u32 offset_x = 0; offset_x < scale; offset_x++)
+
+                    auto dst_x = src_x * scale;
+                    for (u32 offset_x = 0; offset_x < scale; offset_x++, dst_x++)
                     {
-                        auto dst_x = src_x * scale + offset_x;
                         dst_row[dst_x] = s;
+                        i++;
                     }
                 }
             }
         }
+
+        assert(i == dst.width * dst.height);
     }
 }
 
