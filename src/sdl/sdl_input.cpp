@@ -492,7 +492,7 @@ namespace input
                 return;
             }
 
-            bool is_down = event.key.state == SDL_PRESSED;
+            bool is_down = event.type == SDL_KEYDOWN; //event.key.state == SDL_PRESSED;
 
             auto key_code = event.key.keysym.sym;
             record_keyboard_input(key_code, old_keyboard, new_keyboard, is_down);

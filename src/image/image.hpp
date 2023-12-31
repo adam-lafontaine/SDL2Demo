@@ -29,6 +29,15 @@ namespace image
 }
 
 
+/* gray */
+
+namespace image
+{
+    using ImageGray = Matrix2D<u8>;
+    using ImageViewGray = MatrixView2D<u8>;
+}
+
+
 /* create destroy */
 
 namespace image
@@ -39,11 +48,20 @@ namespace image
 
 
     using Buffer32 = MemoryBuffer<Pixel>;
+    using Buffer8 = MemoryBuffer<u8>;
 
 
 	inline Buffer32 create_buffer32(u32 n_pixels)
 	{
 		Buffer32 buffer;
+		mb::create_buffer(buffer, n_pixels);
+		return buffer;
+	}
+
+
+    inline Buffer8 create_buffer8(u32 n_pixels)
+	{
+		Buffer8 buffer;
 		mb::create_buffer(buffer, n_pixels);
 		return buffer;
 	}
@@ -57,6 +75,8 @@ namespace image
     ImageView make_view(Image const& image);
 
     ImageView make_view(u32 width, u32 height, Buffer32& buffer);
+
+    ImageViewGray make_view(u32 width, u32 height, Buffer8& buffer);
 }
 
 
@@ -64,11 +84,12 @@ namespace image
 
 namespace image
 {
-    class ImageSubView
+    template <typename T>
+    class MatrixSubView2D
     {
     public:
-        Pixel* matrix_data_;
-		u32 matrix_width;
+        T*  matrix_data_;
+        u32 matrix_width;
 
 		u32 width;
 		u32 height;
@@ -85,11 +106,17 @@ namespace image
 				u32 y_end;
 			};
         };
-        
     };
 
 
+    using ImageSubView = MatrixSubView2D<Pixel>;
+    
+    using ImageSubViewGray = MatrixSubView2D<u8>;
+
+
     ImageSubView sub_view(ImageView const& image, Rect2Du32 const& range);
+
+    ImageSubViewGray sub_view(ImageViewGray const& view, Rect2Du32 const& range);
 }
 
 

@@ -22,7 +22,8 @@ namespace image
 	}
 
 
-    static inline Pixel* row_begin(ImageSubView const& view, u32 y)
+    template <typename T>
+    static inline T* row_begin(MatrixSubView2D<T> const& view, u32 y)
     {
         return view.matrix_data_ + (u64)((view.y_begin + y) * view.matrix_width + view.x_begin);
     }
@@ -96,6 +97,21 @@ namespace image
 
         return view;
     }
+
+
+    ImageViewGray make_view(u32 width, u32 height, Buffer8& buffer)
+    {
+        ImageViewGray view{};
+
+        view.matrix_data_ = mb::push_elements(buffer, width * height);
+        if (view.matrix_data_)
+        {
+            view.width = width;
+            view.height = height;
+        }
+
+        return view;
+    }
 }
 
 
@@ -103,9 +119,10 @@ namespace image
 
 namespace image
 {
-    ImageSubView sub_view(ImageView const& view, Rect2Du32 const& range)
+    template <typename T>
+    static MatrixSubView2D<T> t_sub_view(MatrixView2D<T> const& view, Rect2Du32 const& range)
     {
-        ImageSubView sub_view{};
+        MatrixSubView2D<T> sub_view{};
 
         sub_view.matrix_data_ = view.matrix_data_;
         sub_view.matrix_width = view.width;
@@ -114,6 +131,18 @@ namespace image
         sub_view.height = range.y_end - range.y_begin;
 
         return sub_view;
+    }
+
+
+    ImageSubView sub_view(ImageView const& view, Rect2Du32 const& range)
+    {
+        return t_sub_view(view, range);
+    }
+
+
+    ImageSubViewGray sub_view(ImageViewGray const& view, Rect2Du32 const& range)
+    {
+        return t_sub_view(view, range);
     }
 }
 
@@ -298,6 +327,14 @@ namespace image
 
         assert(i == dst.width * dst.height);
     }
+}
+
+
+/* map */
+
+namespace image
+{
+
 }
 
 

@@ -73,9 +73,27 @@ namespace kb
                 ImageSubView key_s;
                 ImageSubView key_d;
                 ImageSubView key_space;
-            };
-            
+            };            
         };
+
+        union
+        {
+            Pixel colors[count];
+
+            struct 
+            {
+                Pixel color_1;
+                Pixel color_2;
+                Pixel color_3;
+                Pixel color_4;
+                Pixel color_w;
+                Pixel color_a;
+                Pixel color_s;
+                Pixel color_d;
+                Pixel color_space;
+            };
+        };
+
         
     };
 
@@ -175,8 +193,17 @@ namespace app
 }
 
 
+/* keyboard */
+
 namespace
 {
+    constexpr auto KEY_BLUE = img::to_pixel(0, 0, 200);
+    constexpr auto KEY_RED = img::to_pixel(200, 0, 0);
+
+
+
+
+
     void init_keyboard(app::StateData& state, Image const& raw_keyboard, u32 up_scale, img::Buffer32& buffer)
     {
         auto width = raw_keyboard.width * up_scale;
@@ -187,10 +214,64 @@ namespace
 
         auto& keys = state.keyboard_views;
         keys = kb::make_key_views(state.keyboard);
-        auto const blue = img::to_pixel(0, 0, 200);
+
         for (u32 i = 0; i < keys.count; i++)
         {
-            img::alpha_blend(keys.keys[i], blue);
+            keys.colors[i] = KEY_BLUE;
+        }
+    }
+
+
+    void update_key_colors(kb::KeyViews& keys, input::Input const& input)
+    {
+        for (u32 i = 0; i < keys.count; i++)
+        {
+            keys.colors[i] = KEY_BLUE;
+        }
+
+        if (input.keyboard.one_key.is_down)
+        {
+            keys.color_1 = KEY_RED;
+        }
+
+        if (input.keyboard.two_key.is_down)
+        {
+            keys.color_2 = KEY_RED;
+        }
+
+        if (input.keyboard.three_key.is_down)
+        {
+            keys.color_3 = KEY_RED;
+        }
+
+        if (input.keyboard.four_key.is_down)
+        {
+            keys.color_4 = KEY_RED;
+        }
+
+        if (input.keyboard.w_key.is_down)
+        {
+            keys.color_w = KEY_RED;
+        }
+
+        if (input.keyboard.a_key.is_down)
+        {
+            keys.color_a = KEY_RED;
+        }
+
+        if (input.keyboard.s_key.is_down)
+        {
+            keys.color_s = KEY_RED;
+        }
+
+        if (input.keyboard.d_key.is_down)
+        {
+            keys.color_d = KEY_RED;
+        }
+
+        if (input.keyboard.space_key.is_down)
+        {
+            keys.color_space = KEY_RED;
         }
     }
 }
@@ -202,6 +283,14 @@ namespace
 {
     void render_keyboard(app::StateData const& state, ImageView const& screen)
     {
+        auto& keys = state.keyboard_views;
+        for (u32 i = 0; i < keys.count; i++)
+        {
+            auto color = keys.colors[i];
+            auto view = keys.keys[i];
+
+            img::fill(view, color);
+        }
 
         img::alpha_blend(state.keyboard, screen);
     }
@@ -259,6 +348,8 @@ namespace app
     {
         auto& screen = state.screen_view;
         auto& state_data = *state.data_;
+
+        update_key_colors(state_data.keyboard_views, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data, screen);

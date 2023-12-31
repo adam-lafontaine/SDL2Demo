@@ -140,8 +140,6 @@ int main(int argc, char *argv[])
 
     b32 frame_curr = 0;
     b32 frame_prev = 1;
-    auto& input_curr = input[frame_curr];
-    auto& input_prev = input[frame_prev];
 
     Stopwatch sw;
     f64 frame_nano = TARGET_NS_PER_FRAME;
@@ -163,8 +161,8 @@ int main(int argc, char *argv[])
         evt.first_in_queue = true;
         evt.has_event = false;
 
-        input_curr = input[frame_curr];
-        input_prev = input[frame_prev];
+        auto& input_curr = input[frame_curr];
+        auto& input_prev = input[frame_prev];
 
         while (SDL_PollEvent(&evt.event))
         {
