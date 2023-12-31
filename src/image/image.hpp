@@ -116,6 +116,10 @@ namespace image
 namespace image
 {
     void alpha_blend(ImageView const& src, ImageView const& dst);
+
+    void alpha_blend(ImageView const& view, Pixel color);
+
+    void alpha_blend(ImageSubView const& view, Pixel color);
 }
 
 

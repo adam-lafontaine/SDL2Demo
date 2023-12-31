@@ -18,7 +18,7 @@ using ImageSubView = img::ImageSubView;
 
 /* image files */
 
-namespace kb
+namespace
 {
     constexpr auto ROOT = "/home/adam/Repos/SDL2Demo";
 
@@ -30,10 +30,18 @@ namespace kb
 
     static inline bool load_keyboard_image(Image& image)
     {
-        return img::read_image_from_file(KEYBOARD_IMAGE_PATH, image);
+        if (!img::read_image_from_file(KEYBOARD_IMAGE_PATH, image))
+        {
+            return false;
+        }
+
+        return true;
     }
+}
 
 
+namespace kb
+{
     class KeyLocation
     {
     public:
@@ -48,7 +56,7 @@ namespace kb
     {
     public:
 
-        static constexpr u32 count = 15;
+        static constexpr u32 count = 9;
         
         union 
         {
@@ -60,12 +68,6 @@ namespace kb
                 ImageSubView key_2;
                 ImageSubView key_3;
                 ImageSubView key_4;
-                ImageSubView key_5;
-                ImageSubView key_6;
-                ImageSubView key_7;
-                ImageSubView key_8;
-                ImageSubView key_9;
-                ImageSubView key_0;
                 ImageSubView key_w;
                 ImageSubView key_a;
                 ImageSubView key_s;
@@ -107,12 +109,6 @@ namespace kb
     static constexpr KeyLocation key_loc_2() { return to_key_loc( 78,   6,  28, 28); }
     static constexpr KeyLocation key_loc_3() { return to_key_loc(114,   6,  28, 28); }
     static constexpr KeyLocation key_loc_4() { return to_key_loc(150,   6,  28, 28); }
-    static constexpr KeyLocation key_loc_5() { return to_key_loc(186,   6,  28, 28); }
-    static constexpr KeyLocation key_loc_6() { return to_key_loc(222,   6,  28, 28); }
-    static constexpr KeyLocation key_loc_7() { return to_key_loc(258,   6,  28, 28); }
-    static constexpr KeyLocation key_loc_8() { return to_key_loc(294,   6,  28, 28); }
-    static constexpr KeyLocation key_loc_9() { return to_key_loc(330,   6,  28, 28); }
-    static constexpr KeyLocation key_loc_0() { return to_key_loc(366,   6,  28, 28); }
     static constexpr KeyLocation key_loc_w() { return to_key_loc( 96,  42,  28, 28); }
     static constexpr KeyLocation key_loc_a() { return to_key_loc( 70,  78,  28, 28); }
     static constexpr KeyLocation key_loc_s() { return to_key_loc(106,  78,  28, 28); }
@@ -128,12 +124,6 @@ namespace kb
         kv.key_2 = get_sub_view(keyboard_view, key_loc_2());
         kv.key_3 = get_sub_view(keyboard_view, key_loc_3());
         kv.key_4 = get_sub_view(keyboard_view, key_loc_4());
-        kv.key_5 = get_sub_view(keyboard_view, key_loc_5());
-        kv.key_6 = get_sub_view(keyboard_view, key_loc_6());
-        kv.key_7 = get_sub_view(keyboard_view, key_loc_7());
-        kv.key_8 = get_sub_view(keyboard_view, key_loc_8());
-        kv.key_9 = get_sub_view(keyboard_view, key_loc_9());
-        kv.key_0 = get_sub_view(keyboard_view, key_loc_0());
         kv.key_w = get_sub_view(keyboard_view, key_loc_w());
         kv.key_a = get_sub_view(keyboard_view, key_loc_a());
         kv.key_s = get_sub_view(keyboard_view, key_loc_s());
@@ -151,7 +141,7 @@ namespace app
     {
     public:
 
-        Pixel screen_color;
+        Pixel background_color;
 
         ImageView keyboard;
         kb::KeyViews keyboard_views;
@@ -185,14 +175,33 @@ namespace app
 }
 
 
+namespace
+{
+    void init_keyboard(app::StateData& state, Image const& raw_keyboard, u32 up_scale, img::Buffer32& buffer)
+    {
+        auto width = raw_keyboard.width * up_scale;
+        auto height = raw_keyboard.height * up_scale;
+
+        state.keyboard = img::make_view(width, height, buffer);        
+        img::scale_up(img::make_view(raw_keyboard), state.keyboard, up_scale);
+
+        auto& keys = state.keyboard_views;
+        keys = kb::make_key_views(state.keyboard);
+        auto const blue = img::to_pixel(0, 0, 200);
+        for (u32 i = 0; i < keys.count; i++)
+        {
+            img::alpha_blend(keys.keys[i], blue);
+        }
+    }
+}
+
+
 /* render */
 
 namespace
 {
     void render_keyboard(app::StateData const& state, ImageView const& screen)
     {
-        
-
 
         img::alpha_blend(state.keyboard, screen);
     }
@@ -215,7 +224,7 @@ namespace app
 
         u32 total_pixels = 0;
         Image raw_keyboard;
-        if (!kb::load_keyboard_image(raw_keyboard))
+        if (!load_keyboard_image(raw_keyboard))
         {
             printf("Error: load_keyboard_image()\n");
             return false;
@@ -226,21 +235,11 @@ namespace app
         auto const keyboard_height = raw_keyboard.height * keyboard_scale;
         total_pixels += keyboard_width * keyboard_height;
 
-        auto& pixel_data = state_data.image_data;
-        pixel_data = img::create_buffer32(total_pixels);
+        auto& pixel_buffer = state_data.image_data;
+        pixel_buffer = img::create_buffer32(total_pixels);        
 
-        state_data.keyboard = img::make_view(keyboard_width, keyboard_height, pixel_data);        
-        img::scale_up(img::make_view(raw_keyboard), state_data.keyboard, keyboard_scale);
-        img::destroy_image(raw_keyboard);
-
-        state_data.keyboard_views = kb::make_key_views(state_data.keyboard);
-
-        auto& keys = state_data.keyboard_views;
-        auto const blue = img::to_pixel(0, 0, 255);
-        for (u32 i = 0; i < keys.count; i++)
-        {
-            img::fill(keys.keys[i], blue);
-        }
+        init_keyboard(state_data, raw_keyboard, keyboard_scale, pixel_buffer);
+        img::destroy_image(raw_keyboard);        
 
         u32 screen_width = state_data.keyboard.width;
         u32 screen_height = state_data.keyboard.height;
@@ -250,7 +249,7 @@ namespace app
         screen.width = screen_width;
         screen.height = screen_height;
 
-        state_data.screen_color = img::to_pixel(0, 128, 0);
+        state_data.background_color = img::to_pixel(128, 128, 128);
 
         return true;
     }
@@ -261,7 +260,7 @@ namespace app
         auto& screen = state.screen_view;
         auto& state_data = *state.data_;
 
-        img::fill(screen, state_data.screen_color);
+        img::fill(screen, state_data.background_color);
         render_keyboard(state_data, screen);
     }
 

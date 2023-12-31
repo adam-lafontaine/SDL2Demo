@@ -204,6 +204,24 @@ namespace image
     }
 
 
+
+    static inline void alpha_blend_span(Pixel* src, Pixel* dst, Pixel color, u32 len)
+    {
+        for (u32 i = 0; i < len; ++i)
+        {
+            auto const s = src[i];
+            auto& d = dst[i];
+
+            auto a = s.alpha / 255.0f;
+
+            d.red = blend_linear(s.red, color.red, a);
+            d.green = blend_linear(s.green, color.green, a);
+            d.blue = blend_linear(s.blue, color.blue, a);
+            d.alpha = 255;
+        }
+    }
+
+
     void alpha_blend(ImageView const& src, ImageView const& dst)
     {
         assert(src.matrix_data_);
@@ -212,6 +230,33 @@ namespace image
         assert(src.height == dst.height);
 
         alpha_blend_span(src.matrix_data_, dst.matrix_data_, src.width * src.height);
+    }
+
+
+    void alpha_blend(ImageView const& view, Pixel color)
+    {
+        assert(view.matrix_data_);
+
+        Pixel* src;
+        Pixel* dst;
+
+        src = dst = view.matrix_data_;
+        alpha_blend_span(src, dst, color, view.width * view.height);
+    }
+
+
+    void alpha_blend(ImageSubView const& view, Pixel color)
+    {
+        assert(view.matrix_data_);
+
+        Pixel* src;
+        Pixel* dst;
+
+        for (u32 y = 0; y < view.height; y++)
+        {
+            src = dst = row_begin(view, y);
+            alpha_blend_span(src, dst, color, view.width);
+        }
     }
 }
 
