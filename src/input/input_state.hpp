@@ -3,6 +3,8 @@
 #include "input.hpp"
 
 
+/* helpers */
+
 namespace input
 {
 	inline void record_button_input(ButtonState const& old_state, ButtonState& new_state, b32 is_down)
@@ -36,33 +38,13 @@ namespace input
 		dst.x = src.x;
 		dst.y = src.y;
 	}
+}
 
 
-	inline void copy_controller_state(ControllerInput const& src, ControllerInput& dst)
-	{
-		for (u32 i = 0; i < CONTROLLER_BUTTONS; ++i)
-		{
-			copy_button_state(src.buttons[i], dst.buttons[i]);
-		}
+/* keyboard */
 
-#if CONTROLLER_STICK_LEFT
-		copy_vec_2d(src.stick_left, dst.stick_left);
-#endif
-
-#if CONTROLLER_STICK_RIGHT
-		copy_vec_2d(src.stick_right, dst.stick_right);
-#endif
-
-#if CONTROLLER_TRIGGER_LEFT
-		dst.trigger_left = src.trigger_left;
-#endif
-
-#if CONTROLLER_TRIGGER_RIGHT
-		dst.trigger_right = src.trigger_right;
-#endif
-	}
-
-
+namespace input
+{
 	inline void copy_keyboard_state(KeyboardInput const& src, KeyboardInput& dst)
 	{
 		for (u32 i = 0; i < KEYBOARD_KEYS; ++i)
@@ -70,6 +52,28 @@ namespace input
 			copy_button_state(src.keys[i], dst.keys[i]);
 		}
 	}
+}
+
+
+/* mouse */
+
+namespace input
+{
+	
+	inline void copy_mouse_position(MouseInput const& src, MouseInput& dst)
+	{
+#if MOUSE_POSITION
+		copy_vec_2d(src.window_pos, dst.window_pos);
+#endif
+	}
+
+
+	inline void copy_mouse_wheel(MouseInput const& src, MouseInput& dst)
+	{
+#if MOUSE_WHEEL
+		copy_vec_2d(src.wheel, dst.wheel);
+#endif
+	}	
 
 
 	inline void copy_mouse_state(MouseInput const& src, MouseInput& dst)
@@ -79,21 +83,13 @@ namespace input
 			copy_button_state(src.buttons[i], dst.buttons[i]);
 		}
 
-#if MOUSE_POSITION
-		dst.window_pos.x = src.window_pos.x;
-		dst.window_pos.y = src.window_pos.y;
-#endif
-
-#if MOUSE_WHEEL
-		dst.wheel.x = src.wheel.x;
-		dst.wheel.y = src.wheel.y;
-#endif
-	}
+		copy_mouse_position(src, dst);
+		copy_mouse_wheel(src, dst);
+	}	
 
 
 	inline void reset_mouse(MouseInput& mouse)
 	{
-
 		for (u32 i = 0; i < MOUSE_BUTTONS; ++i)
 		{
 			reset_button_state(mouse.buttons[i]);
@@ -108,6 +104,47 @@ namespace input
 		mouse.wheel.x = 0;
 		mouse.wheel.y = 0;
 #endif
+	}
+}
+
+
+/* controller */
+
+namespace input
+{
+	inline void copy_controller_axes(ControllerInput const& src, ControllerInput& dst)
+	{
+#if CONTROLLER_AXIS_STICK_LEFT
+		copy_vec_2d(src.stick_left, dst.stick_left);
+#endif
+
+#if CONTROLLER_AXIS_STICK_RIGHT
+		copy_vec_2d(src.stick_right, dst.stick_right);
+#endif
+	}
+
+
+	inline void copy_controller_triggers(ControllerInput const& src, ControllerInput& dst)
+	{
+#if CONTROLLER_TRIGGER_LEFT
+		dst.trigger_left = src.trigger_left;
+#endif
+
+#if CONTROLLER_TRIGGER_RIGHT
+		dst.trigger_right = src.trigger_right;
+#endif
+	}
+
+
+	inline void copy_controller_state(ControllerInput const& src, ControllerInput& dst)
+	{
+		for (u32 i = 0; i < CONTROLLER_BUTTONS; ++i)
+		{
+			copy_button_state(src.buttons[i], dst.buttons[i]);
+		}
+
+		copy_controller_axes(src, dst);
+		copy_controller_triggers(src, dst);
 	}
 }
 
