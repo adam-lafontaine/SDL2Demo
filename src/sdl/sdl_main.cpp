@@ -1,15 +1,23 @@
 #include "sdl_include.hpp"
 #include "../util/stopwatch.hpp"
+#include "../app/app.hpp"
+
+#ifndef NDEBUG
+
+#include "../util/qsprintf/qsprintf.hpp"
+
+#endif
 
 #include <thread>
+#include <cassert>
 
 
-constexpr auto WINDOW_TITLE = "Window Title";
-constexpr int WINDOW_HEIGHT = 480;
-constexpr int WINDOW_WIDTH = 600;
+constexpr auto WINDOW_TITLE = app::APP_TITLE;
+
+constexpr f64 NANO = 1'000'000'000;
 
 constexpr f64 TARGET_FRAMERATE_HZ = 60.0f;
-constexpr f64 TARGET_NS_PER_FRAME = 1'000'000.0 / TARGET_FRAMERATE_HZ;
+constexpr f64 TARGET_NS_PER_FRAME = NANO / TARGET_FRAMERATE_HZ;
 
 
 static bool g_running = false;
@@ -86,17 +94,43 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    sdl::ScreenMemory screen{};
-    if(!create_screen_memory(screen, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT))
+    app::AppState app_state{};
+    if (!app::init(app_state))
     {
+        print_message("Error: app::init()");
+        sdl::close();
         return EXIT_FAILURE;
     }
+
+    auto window_width = app_state.screen_view.width;
+    auto window_height = app_state.screen_view.height;
+
+    assert(window_width);
+    assert(window_height);
+
+    if (!window_width || !window_height)
+    {
+        print_message("Error: app::init()");
+        sdl::close();
+        return EXIT_FAILURE;
+    }
+
+    sdl::ScreenMemory screen{};
+    if(!sdl::create_screen_memory(screen, WINDOW_TITLE, window_width, window_height))
+    {
+        print_message("Error: sdl::create_screen_memory()");
+        sdl::close();
+        return EXIT_FAILURE;
+    }
+
+    app_state.screen_view.matrix_data_ = screen.image.data_;
 
     input::Input input[2] = {};
     sdl::ControllerInput controller_input = {};
 
     auto const cleanup = [&]()
     {
+        app::close(app_state);
         sdl::close_game_controllers(controller_input, input[0]);
         sdl::close();
     };
@@ -106,40 +140,17 @@ int main(int argc, char *argv[])
 
     b32 frame_curr = 0;
     b32 frame_prev = 1;
+
     Stopwatch sw;
-    f64 frame_ns_elapsed = TARGET_NS_PER_FRAME;
-    char dbg_title[50] = { 0 };
+    f64 frame_nano = TARGET_NS_PER_FRAME;
     f64 ns_elapsed = 0.0;
-    f64 title_refresh_ns = 0.5;
 
-    auto const wait_for_framerate = [&]()
-    {
-        frame_ns_elapsed = sw.get_time_nano();
-/*
 #ifndef NDEBUG
-        if(ns_elapsed >= title_refresh_ns)
-        {
-            ns_elapsed = 0.0;
-            
-            snprintf(dbg_title, 50, "%s (%d)", WINDOW_TITLE, (int)(frame_ns_elapsed / 1000));
-            SDL_SetWindowTitle(screen.window, dbg_title);            
-        }
+    constexpr f64 title_refresh_ns = NANO * 0.25;
+    constexpr int TITLE_LEN = 50;
+    char dbg_title[TITLE_LEN] = { 0 };
+    int frame_milli = 0;
 #endif
-*/
-        auto sleep_ns = (u32)(TARGET_NS_PER_FRAME - frame_ns_elapsed);
-        if (sleep_ns > 0)
-        { 
-            std::this_thread::sleep_for(std::chrono::nanoseconds(sleep_ns));
-            while (frame_ns_elapsed < TARGET_NS_PER_FRAME)
-            {
-                frame_ns_elapsed = sw.get_time_nano();
-            }        
-        }
-
-        ns_elapsed += frame_ns_elapsed;        
-
-        sw.start();
-    };
 
     g_running = true;
 
@@ -171,9 +182,42 @@ int main(int argc, char *argv[])
         input::process_controller_input(controller_input, input_prev, input_curr);
 
         // does not miss frames but slows animation
-        input_curr.dt_frame = (f32)(TARGET_NS_PER_FRAME / 1'000'000);
+        input_curr.dt_frame = (f32)(1.0 / TARGET_FRAMERATE_HZ);
 
-        wait_for_framerate();
+        app::update(app_state, input_curr);
+
+        // track frame rate
+        frame_nano = sw.get_time_nano();
+
+#ifndef NDEBUG
+        frame_milli = (int)(frame_nano / 1'000'000 + 0.5);
+#endif
+
+        auto sleep_ns = TARGET_NS_PER_FRAME - frame_nano;
+        if (sleep_ns > 0)
+        { 
+            std::this_thread::sleep_for(std::chrono::nanoseconds((i64)(sleep_ns)));
+            while (frame_nano < TARGET_NS_PER_FRAME)
+            {
+                frame_nano = sw.get_time_nano();
+            }        
+        }
+
+        ns_elapsed += frame_nano;
+
+        sw.start();
+
+#ifndef NDEBUG
+        if(ns_elapsed >= title_refresh_ns)
+        {
+            auto fps = (int)(NANO / frame_nano + 0.5);
+            qsnprintf(dbg_title, TITLE_LEN, "%s (%d fps / %d ms)", WINDOW_TITLE, fps, frame_milli);
+            SDL_SetWindowTitle(screen.window, dbg_title);
+
+            ns_elapsed = 0.0;
+        }
+#endif
+
         sdl::render_screen(screen);
 
         frame_prev = frame_curr;

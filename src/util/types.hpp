@@ -40,17 +40,66 @@ public:
 };
 
 
+template <typename T>
+class Matrix2D
+{
+public:
+	T* data_ = nullptr;
+	u32 width = 0;
+	u32 height = 0;
+};
+
+
+template <typename T>
+class MatrixView2D
+{
+public:
+
+	T* matrix_data_ = 0;
+
+	u32 width = 0;
+	u32 height = 0;
+};
+
+
+class RGBAu8
+{
+public:
+	u8 red;
+	u8 green;
+	u8 blue;
+	u8 alpha;
+};
+
+
+template <typename T>
+class DataResult
+{
+public:
+	T data;
+	bool success = false;
+	cstr message = 0;
+};
+
+
+template <typename T>
+using Point2D = Vec2D<T>;
+
 using Vec2Di32 = Vec2D<i32>;
 using Vec2Df32 = Vec2D<f32>;
 using Vec2Du32 = Vec2D<u32>;
 using Vec2Df64 = Vec2D<f64>;
 
-using Point2Di32 = Vec2Di32;
-using Point2Df32 = Vec2Df32;
-using Point2Du32 = Vec2Du32;
-using Point2Df64 = Vec2Df64;
+using Point2Di32 = Point2D<i32>;
+using Point2Df32 = Point2D<f32>;
+using Point2Du32 = Point2D<u32>;
+using Point2Df64 = Point2D<f64>;
 
 using Rect2Di32 = Rect2D<i32>;
 using Rect2Df32 = Rect2D<f32>;
 using Rect2Du32 = Rect2D<u32>;
 using Rect2Df64 = Rect2D<f64>;
+
+using Pixel = RGBAu8;
+using Image = Matrix2D<Pixel>;
+using ImageView = MatrixView2D<Pixel>;

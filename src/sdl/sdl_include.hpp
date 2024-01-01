@@ -28,7 +28,7 @@ static void print_message(const char* msg)
 
 namespace sdl
 {
-    constexpr u32 SCREEN_BYTES_PER_PIXEL = 4;
+    constexpr u32 SCREEN_BYTES_PER_PIXEL = sizeof(Pixel);
 
     constexpr auto MAX_CONTROLLERS = input::MAX_CONTROLLERS;
 
@@ -198,14 +198,15 @@ namespace sdl
 
     static void set_window_icon(SDL_Window* window)
     {
-        // this will "paste" the struct my_icon into this function
-    /*#include "../resources/icon_64.h"
+        // https://blog.gibson.sh/2015/04/13/how-to-integrate-your-sdl2-window-icon-or-any-image-into-your-executable/
+   
+#include "../resources/icon_64.c" // this will "paste" the struct my_icon into this function
 
     // these masks are needed to tell SDL_CreateRGBSurface(From)
     // to assume the data it gets is byte-wise RGB(A) data
         Uint32 rmask, gmask, bmask, amask;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-        int shift = (window_icon.bytes_per_pixel == 3) ? 8 : 0;
+        int shift = (icon_64.bytes_per_pixel == 3) ? 8 : 0;
         rmask = 0xff000000 >> shift;
         gmask = 0x00ff0000 >> shift;
         bmask = 0x0000ff00 >> shift;
@@ -214,20 +215,21 @@ namespace sdl
         rmask = 0x000000ff;
         gmask = 0x0000ff00;
         bmask = 0x00ff0000;
-        amask = (window_icon.bytes_per_pixel == 3) ? 0 : 0xff000000;
+        amask = (icon_64.bytes_per_pixel == 3) ? 0 : 0xff000000;
 #endif
 
         SDL_Surface* icon = SDL_CreateRGBSurfaceFrom(
-            (void*)window_icon.pixel_data,
-            window_icon.width,
-            window_icon.height,
-            window_icon.bytes_per_pixel * 8,
-            window_icon.bytes_per_pixel * window_icon.width,
+            (void*)icon_64.pixel_data,
+            icon_64.width,
+            icon_64.height,
+            icon_64.bytes_per_pixel * 8,
+            icon_64.bytes_per_pixel * icon_64.width,
             rmask, gmask, bmask, amask);
 
         SDL_SetWindowIcon(window, icon);
 
-        SDL_FreeSurface(icon);*/
+        SDL_FreeSurface(icon);
+        
     }
 
 
@@ -262,17 +264,15 @@ namespace sdl
         SDL_Renderer* renderer = nullptr;
         SDL_Texture* texture = nullptr;
 
-        void* image_data;
-        int image_width;
-        int image_height;
+        Image image;
     };
 
 
     static void destroy_screen_memory(ScreenMemory& screen)
     {
-        if (screen.image_data)
+        if (screen.image.data_)
         {
-            free(screen.image_data);
+            free(screen.image.data_);
         }
 
         if (screen.texture)
@@ -292,7 +292,7 @@ namespace sdl
     }
 
 
-    static bool create_screen_memory(ScreenMemory& screen, const char* title, int width, int height)
+    static bool create_screen_memory(ScreenMemory& screen, cstr title, u32 width, u32 height)
     {
         destroy_screen_memory(screen);
 
@@ -300,8 +300,8 @@ namespace sdl
             title,
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
-            width,
-            height,
+            (int)width,
+            (int)height,
             SDL_WINDOW_RESIZABLE);
 
         if(!screen.window)
@@ -323,7 +323,7 @@ namespace sdl
 
         screen.texture =  SDL_CreateTexture(
             screen.renderer,
-            SDL_PIXELFORMAT_ARGB8888,
+            SDL_PIXELFORMAT_ABGR8888,
             SDL_TEXTUREACCESS_STREAMING,
             width,
             height);
@@ -335,17 +335,17 @@ namespace sdl
             return false;
         }
 
-        screen.image_data = malloc((size_t)SCREEN_BYTES_PER_PIXEL * width * height);
+        screen.image.data_ = (Pixel*)malloc((size_t)(SCREEN_BYTES_PER_PIXEL * width * height));
 
-        if(!screen.image_data)
+        if(!screen.image.data_)
         {
             display_error("Allocating image memory failed");
             destroy_screen_memory(screen);
             return false;
         }
 
-        screen.image_width = width;
-        screen.image_height = height;
+        screen.image.width = width;
+        screen.image.height = height;
 
         return true;
     }
@@ -353,8 +353,8 @@ namespace sdl
 
     static void render_screen(ScreenMemory const& screen)
     {
-        auto const pitch = screen.image_width * SCREEN_BYTES_PER_PIXEL;
-        auto error = SDL_UpdateTexture(screen.texture, 0, screen.image_data, pitch);
+        auto const pitch = screen.image.width * SCREEN_BYTES_PER_PIXEL;
+        auto error = SDL_UpdateTexture(screen.texture, 0, (void*)screen.image.data_, pitch);
         if(error)
         {
             print_error("SDL_UpdateTexture failed");
