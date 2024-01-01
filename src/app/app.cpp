@@ -232,47 +232,47 @@ namespace
             keys.colors[i] = KEY_BLUE;
         }
 
-        if (input.keyboard.one_key.is_down)
+        if (input.keyboard.kbd_1.is_down)
         {
             keys.color_1 = KEY_RED;
         }
 
-        if (input.keyboard.two_key.is_down)
+        if (input.keyboard.kbd_2.is_down)
         {
             keys.color_2 = KEY_RED;
         }
 
-        if (input.keyboard.three_key.is_down)
+        if (input.keyboard.kbd_3.is_down)
         {
             keys.color_3 = KEY_RED;
         }
 
-        if (input.keyboard.four_key.is_down)
+        if (input.keyboard.kbd_4.is_down)
         {
             keys.color_4 = KEY_RED;
         }
 
-        if (input.keyboard.w_key.is_down)
+        if (input.keyboard.kbd_W.is_down)
         {
             keys.color_w = KEY_RED;
         }
 
-        if (input.keyboard.a_key.is_down)
+        if (input.keyboard.kbd_A.is_down)
         {
             keys.color_a = KEY_RED;
         }
 
-        if (input.keyboard.s_key.is_down)
+        if (input.keyboard.kbd_S.is_down)
         {
             keys.color_s = KEY_RED;
         }
 
-        if (input.keyboard.d_key.is_down)
+        if (input.keyboard.kbd_D.is_down)
         {
             keys.color_d = KEY_RED;
         }
 
-        if (input.keyboard.space_key.is_down)
+        if (input.keyboard.kbd_space.is_down)
         {
             keys.color_space = KEY_RED;
         }

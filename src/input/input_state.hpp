@@ -44,9 +44,8 @@ namespace input
 	inline void copy_vector_state(VectorState<T> const& src, VectorState<T>& dst)
 	{
 		copy_vec_2d(src.vec, dst.vec);
-		copy_vec_2d(src.unit_direction, dst.unit_direction);
-		dst.angle_rad = src.angle_rad;
 		dst.magnitude = src.magnitude;
+		copy_vec_2d(src.unit_direction, dst.unit_direction);		
 	}
 
 

@@ -57,145 +57,181 @@ namespace input
 		{
 
 #if KEYBOARD_A
-			ButtonState a_key;
+			ButtonState kbd_A;
 #endif
 #if KEYBOARD_B
-			ButtonState b_key;
+			ButtonState kbd_B;
 #endif
 #if KEYBOARD_C
-			ButtonState c_key;
+			ButtonState kbd_C;
 #endif
 #if KEYBOARD_D
-			ButtonState d_key;
+			ButtonState kbd_D;
 #endif
 #if KEYBOARD_E
-			ButtonState e_key;
+			ButtonState kbd_E;
 #endif
 #if KEYBOARD_F
-			ButtonState f_key;
+			ButtonState kbd_F;
 #endif
 #if KEYBOARD_G
-			ButtonState g_key;
+			ButtonState kbd_G;
 #endif
 #if KEYBOARD_H
-			ButtonState h_key;
+			ButtonState kbd_H;
 #endif
 #if KEYBOARD_I
-			ButtonState i_key;
+			ButtonState kbd_I;
 #endif
 #if KEYBOARD_J
-			ButtonState j_key;
+			ButtonState kbd_J;
 #endif
 #if KEYBOARD_K
-			ButtonState k_key;
+			ButtonState kbd_K;
 #endif
 #if KEYBOARD_L
-			ButtonState l_key;
+			ButtonState kbd_L;
 #endif
 #if KEYBOARD_M
-			ButtonState m_key;
+			ButtonState kbd_M;
 #endif
 #if KEYBOARD_N
-			ButtonState n_key;
+			ButtonState kbd_N;
 #endif
 #if KEYBOARD_O
-			ButtonState o_key;
+			ButtonState kbd_O;
 #endif
 #if KEYBOARD_P
-			ButtonState p_key;
+			ButtonState kbd_P;
 #endif
 #if KEYBOARD_Q
-			ButtonState q_key;
+			ButtonState kbd_Q;
 #endif
 #if KEYBOARD_R
-			ButtonState r_key;
+			ButtonState kbd_R;
 #endif
 #if KEYBOARD_S
-			ButtonState s_key;
+			ButtonState kbd_S;
 #endif
 #if KEYBOARD_T
-			ButtonState t_key;
+			ButtonState kbd_T;
 #endif
 #if KEYBOARD_U
-			ButtonState u_key;
+			ButtonState kbd_U;
 #endif
 #if KEYBOARD_V
-			ButtonState v_key;
+			ButtonState kbd_V;
 #endif
 #if KEYBOARD_W
-			ButtonState w_key;
+			ButtonState kbd_W;
 #endif
 #if KEYBOARD_X
-			ButtonState x_key;
+			ButtonState kbd_X;
 #endif
 #if KEYBOARD_Y
-			ButtonState y_key;
+			ButtonState kbd_Y;
 #endif
 #if KEYBOARD_Z
-			ButtonState z_key;
+			ButtonState kbd_Z;
 #endif
 #if KEYBOARD_0
-			ButtonState zero_key;
+			ButtonState kbd_0;
 #endif
 #if KEYBOARD_1
-			ButtonState one_key;
+			ButtonState kbd_1;
 #endif
 #if KEYBOARD_2
-			ButtonState two_key;
+			ButtonState kbd_2;
 #endif
 #if KEYBOARD_3
-			ButtonState three_key;
+			ButtonState kbd_3;
 #endif
 #if KEYBOARD_4
-			ButtonState four_key;
+			ButtonState kbd_4;
 #endif
 #if KEYBOARD_5
-			ButtonState five_key;
+			ButtonState kbd_5;
 #endif
 #if KEYBOARD_6
-			ButtonState six_key;
+			ButtonState kbd_6;
 #endif
 #if KEYBOARD_7
-			ButtonState seven_key;
+			ButtonState kbd_7;
 #endif
 #if KEYBOARD_8
-			ButtonState eight_key;
+			ButtonState kbd_8;
 #endif
 #if KEYBOARD_9
-			ButtonState nine_key;
+			ButtonState kbd_9;
 #endif
 #if KEYBOARD_UP
-			ButtonState up_key;
+			ButtonState kbd_up;
 #endif
 #if KEYBOARD_DOWN
-			ButtonState down_key;
+			ButtonState kbd_down;
 #endif
 #if KEYBOARD_LEFT
-			ButtonState left_key;
+			ButtonState kbd_left;
 #endif
 #if KEYBOARD_RIGHT
-			ButtonState right_key;
+			ButtonState kbd_right;
 #endif
 #if KEYBOARD_RETURN
-			ButtonState return_key;
+			ButtonState kbd_return;
 #endif
 #if KEYBOARD_ESCAPE
-			ButtonState escape_key;
+			ButtonState kbd_escape;
 #endif
 #if KEYBOARD_SPACE
-			ButtonState space_key;
+			ButtonState kbd_space;
 #endif
-#if KEYBOARD_PLUS
-			ButtonState plus_key;
+#if KEYBOARD_LSHIFT
+			ButtonState kbd_left_shift;
 #endif
-#if KEYBOARD_MINUS
-			ButtonState minus_key;
+#if KEYBOARD_RSHIFT
+			ButtonState kbd_right_shift;
 #endif
-#if KEYBOARD_MULTIPLY
-			ButtonState mult_key;
+#if KEYBOARD_NUMPAD_0
+			ButtonState npd_0;
 #endif
-#if KEYBOARD_DIVIDE
-			ButtonState div_key;
+#if KEYBOARD_NUMPAD_1
+			ButtonState npd_1;
+#endif
+#if KEYBOARD_NUMPAD_2
+			ButtonState npd_2;
+#endif
+#if KEYBOARD_NUMPAD_3
+			ButtonState npd_3;
+#endif
+#if KEYBOARD_NUMPAD_4
+			ButtonState npd_4;
+#endif
+#if KEYBOARD_NUMPAD_5
+			ButtonState npd_5;
+#endif
+#if KEYBOARD_NUMPAD_6
+			ButtonState npd_6;
+#endif
+#if KEYBOARD_NUMPAD_7
+			ButtonState npd_7;
+#endif
+#if KEYBOARD_NUMPAD_8
+			ButtonState npd_8;
+#endif
+#if KEYBOARD_NUMPAD_9
+			ButtonState npd_9;
+#endif
+#if KEYBOARD_NUMPAD_PLUS
+			ButtonState npd_plus;
+#endif
+#if KEYBOARD_NUMPAD_MINUS
+			ButtonState npd_minus;
+#endif
+#if KEYBOARD_NUMPAD_MULTIPLY
+			ButtonState npd_mult;
+#endif
+#if KEYBOARD_NUMPAD_DIVIDE
+			ButtonState npd_div;
 #endif
 
 		};
@@ -230,19 +266,19 @@ namespace input
 			struct
 			{
 #if MOUSE_LEFT
-				ButtonState button_left;
+				ButtonState btn_left;
 #endif
 #if MOUSE_RIGHT
-				ButtonState button_right;
+				ButtonState btn_right;
 #endif
 #if MOUSE_MIDDLE
-				ButtonState button_middle;
+				ButtonState btn_middle;
 #endif
 #if MOUSE_X1
-				ButtonState button_x1;
+				ButtonState btn_x1;
 #endif
 #if MOUSE_X2
-				ButtonState button_x2;
+				ButtonState btn_x2;
 #endif
 			};
 		};
