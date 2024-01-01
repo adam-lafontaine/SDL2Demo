@@ -1,7 +1,5 @@
 #pragma once
 
-#include "button_state.hpp"
-
 #define SINGLE_CONTROLLER 1
 
 
@@ -46,77 +44,4 @@ namespace input
 }
 
 
-namespace input
-{
-    class ControllerInput
-    {
-    public:
 
-        union
-        {
-            ButtonState buttons[CONTROLLER_BUTTONS];
-
-            struct
-            {
-#if CONTROLLER_BTN_DPAD_UP
-                ButtonState btn_dpad_up;
-#endif
-#if CONTROLLER_BTN_DPAD_DOWN
-                ButtonState btn_dpad_down;
-#endif
-#if CONTROLLER_BTN_DPAD_LEFT
-                ButtonState btn_dpad_left;
-#endif
-#if CONTROLLER_BTN_DPAD_RIGHT
-                ButtonState btn_dpad_right;
-#endif
-#if CONTROLLER_BTN_START
-                ButtonState btn_start;
-#endif
-#if CONTROLLER_BTN_BACK
-                ButtonState btn_back;
-#endif
-#if CONTROLLER_BTN_A
-                ButtonState btn_a;
-#endif
-#if CONTROLLER_BTN_B
-                ButtonState btn_b;
-#endif
-#if CONTROLLER_BTN_X
-                ButtonState btn_x;
-#endif
-#if CONTROLLER_BTN_Y
-                ButtonState btn_y;
-#endif
-#if CONTROLLER_BTN_SHOULDER_LEFT
-                ButtonState btn_shoulder_left;
-#endif
-#if CONTROLLER_BTN_SHOULDER_RIGHT
-                ButtonState btn_shoulder_right;
-#endif
-#if CONTROLLER_BTN_STICK_LEFT
-                ButtonState btn_stick_left;
-#endif
-#if CONTROLLER_BTN_STICK_RIGHT
-                ButtonState btn_stick_right;
-#endif
-            };            
-        };
-
-#if CONTROLLER_AXIS_STICK_LEFT
-            Vec2Df32 stick_left;
-#endif
-#if CONTROLLER_AXIS_STICK_RIGHT
-            Vec2Df32 stick_right;
-#endif
-#if CONTROLLER_TRIGGER_LEFT
-            f32 trigger_left;
-#endif
-#if CONTROLLER_TRIGGER_RIGHT
-            f32 trigger_right;
-#endif        
-
-    };
-
-
-}

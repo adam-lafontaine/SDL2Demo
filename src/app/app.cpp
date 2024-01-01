@@ -211,13 +211,16 @@ namespace
 
         state.keyboard = img::make_view(width, height, buffer);        
         img::scale_up(img::make_view(raw_keyboard), state.keyboard, up_scale);
+        
+        state.keyboard_views = kb::make_key_views(state.keyboard);
+
+        auto const no_alpha = [](Pixel p){ return p.alpha == 0; };
 
         auto& keys = state.keyboard_views;
-        keys = kb::make_key_views(state.keyboard);
-
         for (u32 i = 0; i < keys.count; i++)
         {
             keys.colors[i] = KEY_BLUE;
+            img::fill_if(keys.keys[i], keys.colors[i], no_alpha);
         }
     }
 
@@ -285,7 +288,7 @@ namespace
     {
         auto const not_black = [](Pixel p)
         {
-            return p.red > 0 || p.green > 0 || p.blue > 0 || p.alpha == 0;
+            return p.red > 0 || p.green > 0 || p.blue > 0;
         };
 
         auto& keys = state.keyboard_views;
