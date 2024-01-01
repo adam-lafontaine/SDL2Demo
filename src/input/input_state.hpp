@@ -47,7 +47,7 @@ namespace input
 {
 	inline void copy_keyboard_state(KeyboardInput const& src, KeyboardInput& dst)
 	{
-		for (u32 i = 0; i < KEYBOARD_KEYS; ++i)
+		for (u32 i = 0; i < N_KEYBOARD_KEYS; ++i)
 		{
 			copy_button_state(src.keys[i], dst.keys[i]);
 		}
@@ -78,7 +78,7 @@ namespace input
 
 	inline void copy_mouse_state(MouseInput const& src, MouseInput& dst)
 	{
-		for (u32 i = 0; i < MOUSE_BUTTONS; ++i)
+		for (u32 i = 0; i < N_MOUSE_BUTTONS; ++i)
 		{
 			copy_button_state(src.buttons[i], dst.buttons[i]);
 		}
@@ -90,7 +90,7 @@ namespace input
 
 	inline void reset_mouse(MouseInput& mouse)
 	{
-		for (u32 i = 0; i < MOUSE_BUTTONS; ++i)
+		for (u32 i = 0; i < N_MOUSE_BUTTONS; ++i)
 		{
 			reset_button_state(mouse.buttons[i]);
 		}
@@ -138,7 +138,7 @@ namespace input
 
 	inline void copy_controller_state(ControllerInput const& src, ControllerInput& dst)
 	{
-		for (u32 i = 0; i < CONTROLLER_BUTTONS; ++i)
+		for (u32 i = 0; i < N_CONTROLLER_BUTTONS; ++i)
 		{
 			copy_button_state(src.buttons[i], dst.buttons[i]);
 		}

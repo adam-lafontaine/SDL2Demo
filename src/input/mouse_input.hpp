@@ -12,3 +12,14 @@
 #define MOUSE_POSITION 1
 
 #define MOUSE_WHEEL 1
+
+
+namespace input
+{
+	constexpr size_t N_MOUSE_BUTTONS =
+	MOUSE_LEFT + 
+	MOUSE_RIGHT + 
+	MOUSE_MIDDLE + 
+	MOUSE_X1 + 
+	MOUSE_X2;
+}

@@ -13,7 +13,7 @@ namespace input
 {
 	union KeyboardInput
 	{
-		ButtonState keys[KEYBOARD_KEYS];
+		ButtonState keys[N_KEYBOARD_KEYS];
 		
 		struct
 		{
@@ -170,15 +170,6 @@ namespace input
 
 namespace input
 {
-	constexpr size_t MOUSE_BUTTONS =
-	MOUSE_LEFT
-	+ MOUSE_RIGHT
-	+ MOUSE_MIDDLE
-	+ MOUSE_X1
-	+ MOUSE_X2
-	;
-
-
 	class MouseInput
 	{
 	public:
@@ -197,7 +188,7 @@ namespace input
 
 		union
 		{
-			ButtonState buttons[MOUSE_BUTTONS];
+			ButtonState buttons[N_MOUSE_BUTTONS];
 			struct
 			{
 #if MOUSE_LEFT
@@ -232,7 +223,7 @@ namespace input
 
         union
         {
-            ButtonState buttons[CONTROLLER_BUTTONS];
+            ButtonState buttons[N_CONTROLLER_BUTTONS];
 
             struct
             {
