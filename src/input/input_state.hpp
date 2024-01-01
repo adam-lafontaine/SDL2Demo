@@ -38,6 +38,19 @@ namespace input
 		dst.x = src.x;
 		dst.y = src.y;
 	}
+
+
+	template <typename T>
+	inline void copy_vector_state(VectorState<T> const& src, VectorState<T>& dst)
+	{
+		copy_vec_2d(src.vec, dst.vec);
+		copy_vec_2d(src.unit_direction, dst.unit_direction);
+		dst.angle_rad = src.angle_rad;
+		dst.magnitude = src.magnitude;
+	}
+
+
+
 }
 
 
@@ -112,14 +125,23 @@ namespace input
 
 namespace input
 {
+	inline void copy_controller_buttons(ControllerInput const& src, ControllerInput& dst)
+	{
+		for (u32 i = 0; i < N_CONTROLLER_BUTTONS; ++i)
+		{
+			copy_button_state(src.buttons[i], dst.buttons[i]);
+		}
+	}
+
+
 	inline void copy_controller_axes(ControllerInput const& src, ControllerInput& dst)
 	{
 #if CONTROLLER_AXIS_STICK_LEFT
-		copy_vec_2d(src.stick_left, dst.stick_left);
+		copy_vector_state(src.stick_left, dst.stick_left);
 #endif
 
 #if CONTROLLER_AXIS_STICK_RIGHT
-		copy_vec_2d(src.stick_right, dst.stick_right);
+		copy_vector_state(src.stick_right, dst.stick_right);
 #endif
 	}
 
@@ -138,11 +160,7 @@ namespace input
 
 	inline void copy_controller_state(ControllerInput const& src, ControllerInput& dst)
 	{
-		for (u32 i = 0; i < N_CONTROLLER_BUTTONS; ++i)
-		{
-			copy_button_state(src.buttons[i], dst.buttons[i]);
-		}
-
+		copy_controller_buttons(src, dst);
 		copy_controller_axes(src, dst);
 		copy_controller_triggers(src, dst);
 	}

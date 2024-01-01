@@ -1,10 +1,48 @@
 #pragma once
 
-#include "button_state.hpp"
-
+#include "../util/types.hpp"
 #include "keyboard_input.hpp"
 #include "mouse_input.hpp"
 #include "controller_input.hpp"
+
+
+namespace input
+{
+	constexpr u32 N_STATES = 3;
+	
+
+	union ButtonState
+	{
+		b32 states[N_STATES];
+		struct
+		{
+			b32 pressed;
+			b32 is_down;
+			b32 raised;
+		};
+	};
+
+
+	template <typename T>
+	class VectorState
+	{
+	public:
+		Vec2D<T> vec;
+
+		f32 magnitude;
+
+		union
+		{
+			Vec2Df32 unit_direction;
+
+			struct
+			{
+				f32 cosine;
+				f32 sine;
+			};
+		};		
+	};
+}
 
 
 /* keyboard */
@@ -273,17 +311,25 @@ namespace input
         };
 
 #if CONTROLLER_AXIS_STICK_LEFT
-            Vec2Df32 stick_left;
+        VectorState<f32> stick_left;
 #endif
 #if CONTROLLER_AXIS_STICK_RIGHT
-            Vec2Df32 stick_right;
+        VectorState<f32> stick_right;
 #endif
 #if CONTROLLER_TRIGGER_LEFT
-            f32 trigger_left;
+        f32 trigger_left;
 #endif
 #if CONTROLLER_TRIGGER_RIGHT
-            f32 trigger_right;
-#endif        
+        f32 trigger_right;
+#endif
+
+
+
+#if CONTROLLER_BTN_DPAD_ALL
+
+		VectorState<i32> vec_dpad;
+
+#endif
 
     };
 }

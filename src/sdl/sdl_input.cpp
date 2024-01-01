@@ -17,90 +17,47 @@ static f32 normalize_axis_value(Sint16 axis)
 }
 
 
-/* controller */
-
-namespace input
+static f32 q_rsqrt(f32 number)
 {
-    static void record_controller_button(SDL_GameController* sdl_controller, SDL_GameControllerButton btn_key, ButtonState const& old_btn, ButtonState& new_btn)
-    {
-        auto is_down = SDL_GameControllerGetButton(sdl_controller, btn_key);
-        record_button_input(old_btn, new_btn, is_down);
-    }
+    long i;
+    float x2, y;
+    constexpr float threehalfs = 1.5F;
+
+    x2 = number * 0.5F;
+    y  = number;
+    i  = * ( long * ) &y;
+    i  = 0x5f3759df - ( i >> 1 );
+    y  = * ( float * ) &i;
+    y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+    // y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+
+    return y;
+}
 
 
-    static f32 get_controller_axis(SDL_GameController* sdl_controller, SDL_GameControllerAxis axis_key)
-    {
-        auto axis = SDL_GameControllerGetAxis(sdl_controller, axis_key);
-        return normalize_axis_value(axis);
-    }
+static f32 q_hypot(f32 a, f32 b)
+{
+    auto number = a * a + b * b;
+
+    long i;
+    float x2, y;
+    constexpr float threehalfs = 1.5F;
+
+    x2 = number * 0.5F;
+    y  = number;
+    i  = * ( long * ) &y;
+    i  = 0x5f3759df - ( i >> 1 );
+    y  = * ( float * ) &i;
+    y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+    y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration
+
+    return 1.0f / y; // std::hypot?
+}
 
 
-    static void record_controller_input(SDL_GameController* sdl_controller, ControllerInput const& old_controller, ControllerInput& new_controller)
-    {
-        input::copy_controller_state(old_controller, new_controller);
+static Vec2Df32 normalize_vector(Vec2Df32 const& vec)
+{
 
-        if(!sdl_controller || !SDL_GameControllerGetAttached(sdl_controller))
-        {
-            return;
-        }
-
-#if CONTROLLER_BTN_DPAD_UP
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_UP, old_controller.btn_dpad_up, new_controller.btn_dpad_up);
-#endif
-#if CONTROLLER_BTN_DPAD_DOWN
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN, old_controller.btn_dpad_down, new_controller.btn_dpad_down);
-#endif
-#if CONTROLLER_BTN_DPAD_LEFT
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT, old_controller.btn_dpad_left, new_controller.btn_dpad_left);
-#endif
-#if CONTROLLER_BTN_DPAD_RIGHT
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT, old_controller.btn_dpad_right, new_controller.btn_dpad_right);
-#endif
-#if CONTROLLER_BTN_START
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_START, old_controller.btn_start, new_controller.btn_start);
-#endif
-#if CONTROLLER_BTN_BACK
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_BACK, old_controller.btn_back, new_controller.btn_back);
-#endif
-#if CONTROLLER_BTN_A
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_A, old_controller.btn_a, new_controller.btn_a);
-#endif
-#if CONTROLLER_BTN_B
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_B, old_controller.btn_b, new_controller.btn_b);
-#endif
-#if CONTROLLER_BTN_X
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_X, old_controller.btn_x, new_controller.btn_x);
-#endif
-#if CONTROLLER_BTN_Y
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_Y, old_controller.btn_y, new_controller.btn_y);
-#endif
-#if CONTROLLER_BTN_SHOULDER_LEFT
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER, old_controller.btn_shoulder_left, new_controller.btn_shoulder_left);
-#endif
-#if CONTROLLER_BTN_SHOULDER_RIGHT
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, old_controller.btn_shoulder_right, new_controller.btn_shoulder_right);
-#endif
-#if CONTROLLER_BTN_STICK_LEFT
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_LEFTSTICK, old_controller.btn_stick_left, new_controller.btn_stick_left);
-#endif
-#if CONTROLLER_BTN_STICK_RIGHT
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK, old_controller.btn_stick_right, new_controller.btn_stick_right);        
-#endif
-#if CONTROLLER_AXIS_STICK_LEFT
-        new_controller.stick_left.x = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_LEFTX);
-        new_controller.stick_left.y = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_LEFTY);
-#endif
-#if CONTROLLER_AXIS_STICK_RIGHT
-        new_controller.stick_right.x = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_RIGHTX);
-        new_controller.stick_right.y = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_RIGHTY);
-#endif
-#if CONTROLLER_TRIGGER_LEFT
-        new_controller.trigger_left = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-#endif
-#if CONTROLLER_TRIGGER_RIGHT
-        new_controller.trigger_right = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
-#endif
-    }
 }
 
 
@@ -416,7 +373,7 @@ namespace input
 /* mouse */
 namespace input
 {
-    static void record_mouse_button_input(Uint8 button_code, MouseInput const& old_input, MouseInput& new_input, bool is_down)
+    static void record_mouse_button_input(MouseInput const& old_input, MouseInput& new_input, Uint8 button_code, bool is_down)
     {
         switch(button_code)
         {		
@@ -452,22 +409,183 @@ namespace input
 #endif
         }
     }
+
+
+    static void record_mouse_position_input(MouseInput& mouse, SDL_MouseMotionEvent const& motion)
+    {
+        mouse.window_pos.x = motion.x;
+        mouse.window_pos.y = motion.y;
+    }
+
+
+    static void record_mouse_wheel_input(MouseInput& mouse, SDL_MouseWheelEvent const& wheel)
+    {
+        mouse.wheel.x = wheel.x;
+        mouse.wheel.y = wheel.y;
+    }
 }
+
+
+/* controller */
+
+namespace input
+{
+    static f32 get_controller_axis(SDL_GameController* sdl_controller, SDL_GameControllerAxis axis_key)
+    {
+        auto axis = SDL_GameControllerGetAxis(sdl_controller, axis_key);
+        return normalize_axis_value(axis);
+    }
+
+
+    static void record_controller_button(SDL_GameController* sdl_controller, SDL_GameControllerButton btn_key, ButtonState const& old_btn, ButtonState& new_btn)
+    {
+        auto is_down = SDL_GameControllerGetButton(sdl_controller, btn_key);
+        record_button_input(old_btn, new_btn, is_down);
+    }
+
+
+    static void record_controller_button_input(SDL_GameController* sdl_controller, ControllerInput const& old_controller, ControllerInput& new_controller)
+    {
+
+#if CONTROLLER_BTN_DPAD_UP
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_UP, old_controller.btn_dpad_up, new_controller.btn_dpad_up);
+#endif
+#if CONTROLLER_BTN_DPAD_DOWN
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN, old_controller.btn_dpad_down, new_controller.btn_dpad_down);
+#endif
+#if CONTROLLER_BTN_DPAD_LEFT
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT, old_controller.btn_dpad_left, new_controller.btn_dpad_left);
+#endif
+#if CONTROLLER_BTN_DPAD_RIGHT
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT, old_controller.btn_dpad_right, new_controller.btn_dpad_right);
+#endif
+#if CONTROLLER_BTN_START
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_START, old_controller.btn_start, new_controller.btn_start);
+#endif
+#if CONTROLLER_BTN_BACK
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_BACK, old_controller.btn_back, new_controller.btn_back);
+#endif
+#if CONTROLLER_BTN_A
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_A, old_controller.btn_a, new_controller.btn_a);
+#endif
+#if CONTROLLER_BTN_B
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_B, old_controller.btn_b, new_controller.btn_b);
+#endif
+#if CONTROLLER_BTN_X
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_X, old_controller.btn_x, new_controller.btn_x);
+#endif
+#if CONTROLLER_BTN_Y
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_Y, old_controller.btn_y, new_controller.btn_y);
+#endif
+#if CONTROLLER_BTN_SHOULDER_LEFT
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER, old_controller.btn_shoulder_left, new_controller.btn_shoulder_left);
+#endif
+#if CONTROLLER_BTN_SHOULDER_RIGHT
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, old_controller.btn_shoulder_right, new_controller.btn_shoulder_right);
+#endif
+#if CONTROLLER_BTN_STICK_LEFT
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_LEFTSTICK, old_controller.btn_stick_left, new_controller.btn_stick_left);
+#endif
+#if CONTROLLER_BTN_STICK_RIGHT
+        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK, old_controller.btn_stick_right, new_controller.btn_stick_right);        
+#endif
+
+
+
+    }
+
+
+    static void record_controller_axis_input(SDL_GameController* sdl_controller, ControllerInput& controller)
+    {
+
+#if CONTROLLER_AXIS_STICK_LEFT
+        auto& left = controller.stick_left;
+        left.vec.x = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_LEFTX);
+        left.vec.y = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_LEFTY);
+
+        left.magnitude = q_hypot(left.vec.x, left.vec.y);
+        left.unit_direction.x = left.vec.x / left.magnitude;
+        left.unit_direction.y = left.vec.y / left.magnitude;
+
+#endif
+#if CONTROLLER_AXIS_STICK_RIGHT
+        auto& right = controller.stick_right;
+        right.vec.x = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_RIGHTX);
+        right.vec.y = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_RIGHTY);
+
+        right.magnitude = q_hypot(right.vec.x, right.vec.y);
+        right.unit_direction.x = right.vec.x / right.magnitude;
+        right.unit_direction.y = right.vec.y / right.magnitude;
+#endif
+
+    }
+
+
+    static void record_controller_trigger_input(SDL_GameController* sdl_controller, ControllerInput& controller)
+    {
+
+#if CONTROLLER_TRIGGER_LEFT
+        controller.trigger_left = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+#endif
+#if CONTROLLER_TRIGGER_RIGHT
+        controller.trigger_right = get_controller_axis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+#endif
+
+    }
+
+
+    static void record_controller_dpad_vector(ControllerInput& controller)
+    {
+#if CONTROLLER_BTN_DPAD_ALL
+
+        auto& vec = controller.vec_dpad;
+
+        vec.vec.x = (i32)controller.btn_dpad_right.is_down - (i32)controller.btn_dpad_left.is_down;
+        vec.vec.y = (i32)controller.btn_dpad_down.is_down - (i32)controller.btn_dpad_up.is_down;
+
+        auto const vec_x = (f32)vec.vec.x;
+        auto const vec_y = (f32)vec.vec.y;
+
+        constexpr f32 hypot = 1.4142135f;
+        
+        if (vec_x || vec_y)
+        {
+            vec.magnitude = (vec_x && vec_y) ? hypot : 1.0f;
+
+            vec.unit_direction.x = vec_x / vec.magnitude;
+            vec.unit_direction.y = vec_y / vec.magnitude;
+        }
+        else
+        {
+            vec.magnitude = 0.0f;      
+            vec.unit_direction.x = 0.0f;
+            vec.unit_direction.y = 0.0f;
+        }
+
+#endif
+    }
+
+
+    static void record_controller_input(SDL_GameController* sdl_controller, ControllerInput const& old_controller, ControllerInput& new_controller)
+    {
+        if(!sdl_controller || !SDL_GameControllerGetAttached(sdl_controller))
+        {
+            return;
+        }
+
+        record_controller_button_input(sdl_controller, old_controller, new_controller);
+        record_controller_axis_input(sdl_controller, new_controller);
+        record_controller_trigger_input(sdl_controller, new_controller);
+        record_controller_dpad_vector(new_controller);
+    }
+}
+
 
 
 /* api */
 
 namespace input
 {
-    void process_controller_input(sdl::ControllerInput const& sdl_controller, Input const& old_input, Input& new_input)
-    {
-        for(u32 c = 0; c < new_input.num_controllers; ++c)
-        {
-            record_controller_input(sdl_controller.controllers[c], old_input.controllers[c], new_input.controllers[c]);
-        }
-    }
-
-
     void process_keyboard_input(sdl::EventInfo const& evt, KeyboardInput const& old_keyboard, KeyboardInput& new_keyboard)
     {
         if (evt.first_in_queue)
@@ -523,23 +641,28 @@ namespace input
         case SDL_MOUSEBUTTONUP:
         {
             bool is_down = event.type == SDL_MOUSEBUTTONDOWN;
-            auto button = event.button.button;
+            auto button_code = event.button.button;
 
-            record_mouse_button_input(button, old_mouse, mouse, is_down);
+            record_mouse_button_input(old_mouse, mouse, button_code, is_down);
         } break;
         case SDL_MOUSEMOTION:
         {
-            auto& motion = event.motion;
-
-            mouse.window_pos.x = motion.x;
-            mouse.window_pos.y = motion.y;
-
+            record_mouse_position_input(mouse, event.motion);
         } break;
         case SDL_MOUSEWHEEL:
         {
-            mouse.wheel.x = event.wheel.x;
-            mouse.wheel.y = event.wheel.y;
+            record_mouse_wheel_input(mouse, event.wheel);
         } break;
+        }
+    }
+
+
+    void process_controller_input(sdl::ControllerInput const& sdl_controller, Input const& old_input, Input& new_input)
+    {
+        for(u32 c = 0; c < new_input.num_controllers; ++c)
+        {
+            input::copy_controller_state(old_input.controllers[c], new_input.controllers[c]);
+            record_controller_input(sdl_controller.controllers[c], old_input.controllers[c], new_input.controllers[c]);
         }
     }
 }
