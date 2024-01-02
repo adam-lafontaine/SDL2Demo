@@ -366,6 +366,8 @@ namespace
 }
 
 
+/* init */
+
 namespace
 {
     static void init_screen_ui(app::AppState& state)
@@ -380,9 +382,9 @@ namespace
         kbd.y_end = kbd.y_begin + state_data.ui_keyboard.height;
 
         Rect2Du32 mouse{};
-        mouse.x_begin = kbd.x_end;
+        mouse.x_begin = 0;
         mouse.x_end = mouse.x_begin + state_data.ui_mouse.width;
-        mouse.y_begin = kbd.y_begin;
+        mouse.y_begin = kbd.y_end;
         mouse.y_end = mouse.y_begin + state_data.ui_mouse.height;
 
         state_data.screen_keyboard = img::sub_view(screen, kbd);
@@ -435,8 +437,8 @@ namespace app
         auto const mouse_width = raw_mouse.width * mouse_scale;
         auto const mouse_height = raw_mouse.height * mouse_scale;
 
-        u32 screen_width = keyboard_width + mouse_width;
-        u32 screen_height = std::max(keyboard_height, mouse_height);
+        u32 screen_width = keyboard_width;
+        u32 screen_height = keyboard_height + mouse_height;
 
         auto& state_data = *state.data_;
         state_data.is_init = false;
