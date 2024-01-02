@@ -307,13 +307,16 @@ namespace
         
         state.mouse_views = ui::make_ui_mouse_views(state.ui_mouse);
 
-        auto const no_alpha = [](Pixel p){ return p.alpha == 0; };
+        auto const has_color = [](Pixel p)
+        {
+            return p.alpha > 0 && (p.red > 0 || p.green > 0 || p.blue > 0);
+        };
 
         auto& buttons = state.mouse_views;
         for (u32 i = 0; i < buttons.count; i++)
         {
             buttons.btn_colors[i] = ui::WHITE;
-            img::fill_if(buttons.buttons[i], buttons.btn_colors[i], no_alpha);
+            img::fill_if(buttons.buttons[i], buttons.btn_colors[i], has_color);
         }
     }
 }
@@ -345,9 +348,9 @@ namespace
 
     void render_mouse(app::StateData const& state)
     {
-        auto const not_black = [](Pixel p)
+        auto const has_color = [](Pixel p)
         {
-            return p.red > 0 || p.green > 0 || p.blue > 0;
+            return p.alpha > 0 && (p.red > 0 || p.green > 0 || p.blue > 0);
         };
 
         auto& buttons = state.mouse_views;
@@ -355,7 +358,7 @@ namespace
         {
             auto color = buttons.btn_colors[i];
             auto view = buttons.buttons[i];
-            img::fill_if(view, color, not_black);
+            img::fill_if(view, color, has_color);
         }
 
         img::alpha_blend(state.ui_mouse, state.screen_mouse);
