@@ -35,7 +35,8 @@ namespace image
 namespace image
 {
     using ImageGray = Matrix2D<u8>;
-    using ImageViewGray = MatrixView2D<u8>;
+    using ImageGrayView = MatrixView2D<u8>;
+    using BinaryView = ImageGrayView;
 }
 
 
@@ -77,7 +78,7 @@ namespace image
 
     ImageView make_view(u32 width, u32 height, Buffer32& buffer);
 
-    ImageViewGray make_view(u32 width, u32 height, Buffer8& buffer);
+    ImageGrayView make_view(u32 width, u32 height, Buffer8& buffer);
 }
 
 
@@ -112,12 +113,12 @@ namespace image
 
     using ImageSubView = MatrixSubView2D<Pixel>;
     
-    using ImageSubViewGray = MatrixSubView2D<u8>;
+    using ImageGraySubView = MatrixSubView2D<u8>;
 
 
     ImageSubView sub_view(ImageView const& image, Rect2Du32 const& range);
 
-    ImageSubViewGray sub_view(ImageViewGray const& view, Rect2Du32 const& range);
+    ImageGraySubView sub_view(ImageGrayView const& view, Rect2Du32 const& range);
 }
 
 
@@ -130,6 +131,8 @@ namespace image
     void fill(ImageSubView const& view, Pixel color);
 
     void fill_if(ImageSubView const& view, Pixel color, std::function<bool(Pixel)> const& pred);
+
+    void fill_if(ImageGraySubView const& view, u8 gray, std::function<bool(u8)> const& pred);
 }
 
 
@@ -159,7 +162,19 @@ namespace image
 
 namespace image
 {
-    void scale_up(ImageView const& src, ImageView const& dst, u32 scale);
+    void scale_upx(ImageView const& src, ImageView const& dst, u32 scale);
+
+    void scale_up_to_mask(ImageView const& src, BinaryView const& dst, u32 scale, std::function<bool(Pixel)> const& pred);
+}
+
+
+/* transform */
+
+namespace image
+{
+    void transform(ImageGrayView const& src, ImageSubView const& dst, std::function<Pixel(u8, Pixel)> const& func);
+
+    void transform_scale_up(ImageView const& src, BinaryView const& dst, u32 scale, std::function<u8(Pixel)> const& func);
 }
 
 
