@@ -410,15 +410,19 @@ namespace input
 
     static void record_mouse_position_input(MouseInput& mouse, SDL_MouseMotionEvent const& motion)
     {
+#if MOUSE_POSITION
         mouse.window_pos.x = motion.x;
         mouse.window_pos.y = motion.y;
+#endif
     }
 
 
     static void record_mouse_wheel_input(MouseInput& mouse, SDL_MouseWheelEvent const& wheel)
     {
+#if MOUSE_WHEEL
         mouse.wheel.x = wheel.x;
         mouse.wheel.y = wheel.y;
+#endif
     }
 }
 
@@ -642,14 +646,23 @@ namespace input
 
             record_mouse_button_input(old_mouse, mouse, button_code, is_down);
         } break;
+
+#if MOUSE_POSITION
+
         case SDL_MOUSEMOTION:
         {
             record_mouse_position_input(mouse, event.motion);
         } break;
+
+#endif
+
+#if MOUSE_WHEEL
+
         case SDL_MOUSEWHEEL:
         {
             record_mouse_wheel_input(mouse, event.wheel);
         } break;
+#endif
         }
     }
 
