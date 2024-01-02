@@ -80,10 +80,11 @@ namespace input
 	}
 
 
-	inline void copy_mouse_wheel(MouseInput const& src, MouseInput& dst)
+	inline void reset_mouse_wheel(MouseInput& mouse)
 	{
 #if MOUSE_WHEEL
-		copy_vec_2d(src.wheel, dst.wheel);
+		mouse.wheel.x = 0;
+		mouse.wheel.y = 0;
 #endif
 	}	
 
@@ -96,7 +97,7 @@ namespace input
 		}
 
 		copy_mouse_position(src, dst);
-		copy_mouse_wheel(src, dst);
+		reset_mouse_wheel(dst);
 	}	
 
 

@@ -319,6 +319,17 @@ namespace
             img::fill_if(buttons.buttons[i], buttons.btn_colors[i], has_color);
         }
     }
+
+
+    void update_mouse_colors(ui::MouseViews& buttons, input::Input const& input)
+    {
+        constexpr auto btn_on = ui::KEY_RED;
+        constexpr auto btn_off = ui::KEY_BLUE;
+
+        buttons.color_left = input.mouse.btn_left.is_down ? btn_on : btn_off;
+        buttons.color_right = input.mouse.btn_right.is_down ? btn_on : btn_off;
+        buttons.color_middle = (input.mouse.btn_middle. is_down || input.mouse.wheel.y != 0) ? btn_on : btn_off;
+    }
 }
 
 
@@ -472,6 +483,7 @@ namespace app
         }
 
         update_key_colors(state_data.keyboard_views, input);
+        update_mouse_colors(state_data.mouse_views, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data);
