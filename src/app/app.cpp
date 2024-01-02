@@ -131,7 +131,7 @@ namespace mask
     class KeyboardMasks
     {
     public:
-        img::BinaryView mask_view;
+        img::ImageGrayView mask_view;
 
         static constexpr u32 count = 9;
         
@@ -177,7 +177,7 @@ namespace mask
     class MouseMasks
     {
     public:
-        img::BinaryView mask_view;
+        img::ImageGrayView mask_view;
 
 
         static constexpr u32 count = 3;
@@ -205,6 +205,67 @@ namespace mask
                 u8 color_right;
             };
         };
+    };
+
+
+    class ControllerMasks
+    {
+    public:
+    img::ImageGrayView mask_view;
+
+
+        static constexpr u32 count = 16;
+
+        union
+        {
+            MaskView buttons[count];
+
+            struct
+            {
+                MaskView btn_dpad_up;
+                MaskView btn_dpad_down;
+                MaskView btn_dpad_left;
+                MaskView btn_dpad_right;
+                MaskView btn_a;
+                MaskView btn_b;
+                MaskView btn_x;
+                MaskView btn_y;
+                MaskView btn_start;
+                MaskView btn_back;
+                MaskView btn_sh_left;
+                MaskView btn_sh_right;
+                MaskView btn_tr_left;
+                MaskView btn_tr_right;
+                MaskView btn_st_left;
+                MaskView btn_st_right;
+            };
+        };
+
+        union
+        {
+            u8 color_ids[count];
+
+            struct
+            {
+                u8 color_dpad_up;
+                u8 color_dpad_down;
+                u8 color_dpad_left;
+                u8 color_dpad_right;
+                u8 color_a;
+                u8 color_b;
+                u8 color_x;
+                u8 color_y;
+                u8 color_start;
+                u8 color_back;
+                u8 color_sh_left;
+                u8 color_sh_right;
+                u8 color_tr_left;
+                u8 color_tr_right;
+                u8 color_st_left;
+                u8 color_st_right;
+            };
+        };
+
     };
 
 
@@ -245,6 +306,33 @@ namespace mask
         masks.btn_middle = img::sub_view(mouse_view, to_rect(68, 4, 24, 58));
         masks.btn_right = img::sub_view(mouse_view, to_rect(100, 4, 56, 58));
     }
+
+
+    static void make_controller_masks(ControllerMasks& masks)
+    {
+        auto& controller_view = masks.mask_view;
+
+        masks.btn_dpad_up    = img::sub_view(controller_view, to_rect(44,  66, 18, 32));
+        masks.btn_dpad_down  = img::sub_view(controller_view, to_rect(44, 120, 18, 32));
+        masks.btn_dpad_left  = img::sub_view(controller_view, to_rect(10, 100, 32, 18));
+        masks.btn_dpad_right = img::sub_view(controller_view, to_rect(64, 100, 32, 18));
+
+        masks.btn_a = img::sub_view(controller_view, to_rect(318, 126, 26, 26));
+        masks.btn_b = img::sub_view(controller_view, to_rect(348,  96, 26, 26));
+        masks.btn_x = img::sub_view(controller_view, to_rect(288,  96, 26, 26));
+        masks.btn_y = img::sub_view(controller_view, to_rect(318,  66, 26, 26));
+
+        masks.btn_start = img::sub_view(controller_view, to_rect(206, 48, 28, 14));
+        masks.btn_back  = img::sub_view(controller_view, to_rect(150, 48, 28, 14));
+
+        masks.btn_sh_left  = img::sub_view(controller_view, to_rect( 36, 44, 34, 14));
+        masks.btn_sh_right = img::sub_view(controller_view, to_rect(314, 44, 34, 14));
+        masks.btn_tr_left  = img::sub_view(controller_view, to_rect( 36, 10, 34, 26));
+        masks.btn_tr_right = img::sub_view(controller_view, to_rect(314, 10, 34, 26));
+
+        masks.btn_st_left  = img::sub_view(controller_view, to_rect(120, 90, 46, 46));
+        masks.btn_st_right = img::sub_view(controller_view, to_rect(218, 90, 46, 46));
+    }
 }
 
 
@@ -258,10 +346,12 @@ namespace app
         
         mask::KeyboardMasks keyboard_mask;        
         mask::MouseMasks mouse_mask;
+        mask::ControllerMasks controller_mask;
 
         b32 is_init;
         ImageSubView screen_keyboard;
         ImageSubView screen_mouse;
+        ImageSubView screen_controller;
         
         MemoryBuffer<u8> mask_data;
     };
@@ -354,6 +444,59 @@ namespace
 }
 
 
+/* controller */
+
+namespace
+{
+    void init_controller_mask(mask::ControllerMasks& masks, Image const& raw_controller, u32 up_scale, img::Buffer8& buffer)
+    {
+        auto width = raw_controller.width * up_scale;
+        auto height = raw_controller.height * up_scale;
+
+        masks.mask_view = img::make_view(width, height, buffer);
+        img::transform_scale_up(img::make_view(raw_controller), masks.mask_view, up_scale, mask::to_mask_color_id);
+
+        mask::make_controller_masks(masks);
+    }
+
+
+    void update_controller_colors(mask::ControllerMasks& buttons, input::Input const& input)
+    {
+        constexpr auto btn_on = mask::ID_RED;
+        constexpr auto btn_off = mask::ID_BLUE;
+
+        buttons.color_dpad_up = input.controller.btn_dpad_up.is_down ? btn_on : btn_off;
+        buttons.color_dpad_down = input.controller.btn_dpad_down.is_down ? btn_on : btn_off;
+        buttons.color_dpad_left = input.controller.btn_dpad_left.is_down ? btn_on : btn_off;
+        buttons.color_dpad_right = input.controller.btn_dpad_right.is_down ? btn_on : btn_off;
+
+        buttons.color_a = input.controller.btn_a.is_down ? btn_on : btn_off;
+        buttons.color_b = input.controller.btn_b.is_down ? btn_on : btn_off;
+        buttons.color_x = input.controller.btn_x.is_down ? btn_on : btn_off;
+        buttons.color_y = input.controller.btn_y.is_down ? btn_on : btn_off;
+
+        buttons.color_start = input.controller.btn_start.is_down ? btn_on : btn_off;
+        buttons.color_back = input.controller.btn_back.is_down ? btn_on : btn_off;
+
+        buttons.color_sh_left = input.controller.btn_shoulder_left.is_down ? btn_on : btn_off;
+        buttons.color_sh_right = input.controller.btn_shoulder_right.is_down ? btn_on : btn_off;
+
+        buttons.color_tr_left = input.controller.trigger_left > 0.0f ? btn_on : btn_off;
+        buttons.color_tr_right = input.controller.trigger_right > 0.0f ? btn_on : btn_off;
+
+        buttons.color_st_left = 
+            input.controller.stick_left.magnitude > 0.3f ||
+            input.controller.btn_stick_left.is_down            
+            ? btn_on : btn_off;
+        
+        buttons.color_st_right = 
+            input.controller.stick_right.magnitude > 0.3f ||
+            input.controller.btn_stick_right.is_down            
+            ? btn_on : btn_off;
+    }
+}
+
+
 /* render */
 
 namespace
@@ -388,6 +531,22 @@ namespace
 
         img::transform(buttons.mask_view, state.screen_mouse, mask::to_render_color);
     }
+
+
+    void render_controller(app::StateData const& state)
+    {
+        auto& buttons = state.controller_mask;
+
+        for (u32 i = 0; i < buttons.count; i++)
+        {
+            auto color_id = buttons.color_ids[i];
+            auto mask = buttons.buttons[i];
+            
+            img::fill_if(mask, color_id, mask::can_set_color_id);
+        }
+
+        img::transform(buttons.mask_view, state.screen_controller, mask::to_render_color);
+    }
 }
 
 
@@ -400,20 +559,27 @@ namespace
         auto& state_data = *state.data_;
         auto& screen = state.screen_view;
 
-        Rect2Du32 kbd{};
-        kbd.x_begin = 0;
-        kbd.x_end = kbd.x_begin + state_data.keyboard_mask.mask_view.width;
-        kbd.y_begin = 0;
-        kbd.y_end = kbd.y_begin + state_data.keyboard_mask.mask_view.height;
+        Rect2Du32 keyboard{};
+        keyboard.x_begin = 0;
+        keyboard.x_end = keyboard.x_begin + state_data.keyboard_mask.mask_view.width;
+        keyboard.y_begin = 0;
+        keyboard.y_end = keyboard.y_begin + state_data.keyboard_mask.mask_view.height;
+
+        Rect2Du32 controller{};
+        controller.x_begin = 0;
+        controller.x_end = controller.x_begin + state_data.controller_mask.mask_view.width;
+        controller.y_begin = keyboard.y_end;
+        controller.y_end = controller.y_begin + state_data.controller_mask.mask_view.height;
 
         Rect2Du32 mouse{};
-        mouse.x_begin = 0;
+        mouse.x_begin = controller.x_end;
         mouse.x_end = mouse.x_begin + state_data.mouse_mask.mask_view.width;
-        mouse.y_begin = kbd.y_end;
+        mouse.y_begin = controller.y_begin;
         mouse.y_end = mouse.y_begin + state_data.mouse_mask.mask_view.height;
 
-        state_data.screen_keyboard = img::sub_view(screen, kbd);
+        state_data.screen_keyboard = img::sub_view(screen, keyboard);
         state_data.screen_mouse = img::sub_view(screen, mouse);
+        state_data.screen_controller = img::sub_view(screen, controller);
     }
 }
 
@@ -432,14 +598,17 @@ namespace app
         
         Image raw_keyboard;
         Image raw_mouse;
+        Image raw_controller;
 
         constexpr u32 keyboard_scale = 2;
         constexpr u32 mouse_scale = 2;
+        constexpr u32 controller_scale = 2;
 
         auto const cleanup = [&]()
         {
             img::destroy_image(raw_keyboard);
             img::destroy_image(raw_mouse);
+            img::destroy_image(raw_controller);
         };
 
         if (!load_keyboard_image(raw_keyboard))
@@ -455,6 +624,13 @@ namespace app
             cleanup();
             return false;
         }
+
+        if (!load_controller_image(raw_controller))
+        {
+            printf("Error: load_controller_image()\n");
+            cleanup();
+            return false;
+        }
         
         auto const keyboard_width = raw_keyboard.width * keyboard_scale;
         auto const keyboard_height = raw_keyboard.height * keyboard_scale;
@@ -462,8 +638,11 @@ namespace app
         auto const mouse_width = raw_mouse.width * mouse_scale;
         auto const mouse_height = raw_mouse.height * mouse_scale;
 
-        u32 screen_width = keyboard_width;
-        u32 screen_height = keyboard_height + mouse_height;
+        auto const controller_width = raw_controller.width * controller_scale;
+        auto const controller_height = raw_controller.height * controller_scale;
+
+        u32 screen_width = std::max(keyboard_width, controller_width + mouse_width);
+        u32 screen_height = keyboard_height + std::max(mouse_height, controller_height);
 
         auto& state_data = *state.data_;
         state_data.is_init = false;
@@ -472,7 +651,8 @@ namespace app
         mask_buffer = img::create_buffer8(screen_width * screen_height);   
 
         init_keyboard_mask(state_data.keyboard_mask, raw_keyboard, keyboard_scale, mask_buffer);
-        init_mouse_mask(state_data.mouse_mask, raw_mouse, mouse_scale, mask_buffer);        
+        init_mouse_mask(state_data.mouse_mask, raw_mouse, mouse_scale, mask_buffer);
+        init_controller_mask(state_data.controller_mask, raw_controller, controller_scale, mask_buffer);
         
         auto& screen = state.screen_view;
 
@@ -500,10 +680,12 @@ namespace app
 
         update_key_colors(state_data.keyboard_mask, input);
         update_mouse_colors(state_data.mouse_mask, input);
+        update_controller_colors(state_data.controller_mask, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data);
         render_mouse(state_data);
+        render_controller(state_data);
     }
 
 
