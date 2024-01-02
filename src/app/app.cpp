@@ -29,7 +29,7 @@ namespace
     const auto MOUSE_IMAGE_PATH = ASSETS_DIR / "mouse.png";
 
 
-    static inline bool load_keyboard_image(Image& image)
+    bool load_keyboard_image(Image& image)
     {
         if (!img::read_image_from_file(KEYBOARD_IMAGE_PATH, image))
         {
@@ -40,7 +40,7 @@ namespace
     }
 
 
-    static inline bool load_mouse_image(Image& image)
+    bool load_mouse_image(Image& image)
     {
         if (!img::read_image_from_file(MOUSE_IMAGE_PATH, image))
         {
@@ -48,6 +48,12 @@ namespace
         }
 
         return true;
+    }
+
+
+    bool has_color(Pixel p)
+    {
+        return p.alpha > 0 && (p.red > 0 || p.green > 0 || p.blue > 0);
     }
 }
 
@@ -264,13 +270,11 @@ namespace
         
         state.keyboard_views = ui::make_ui_keyboard_views(state.ui_keyboard);
 
-        auto const no_alpha = [](Pixel p){ return p.alpha == 0; };
-
         auto& keys = state.keyboard_views;
         for (u32 i = 0; i < keys.count; i++)
         {
             keys.key_colors[i] = ui::WHITE;
-            img::fill_if(keys.keys[i], keys.key_colors[i], no_alpha);
+            img::fill_if(keys.keys[i], keys.key_colors[i], has_color);
         }
     }
 
@@ -307,11 +311,6 @@ namespace
         
         state.mouse_views = ui::make_ui_mouse_views(state.ui_mouse);
 
-        auto const has_color = [](Pixel p)
-        {
-            return p.alpha > 0 && (p.red > 0 || p.green > 0 || p.blue > 0);
-        };
-
         auto& buttons = state.mouse_views;
         for (u32 i = 0; i < buttons.count; i++)
         {
@@ -339,18 +338,13 @@ namespace
 {
     void render_keyboard(app::StateData const& state)
     {
-        auto const not_black = [](Pixel p)
-        {
-            return p.red > 0 || p.green > 0 || p.blue > 0;
-        };
-
         auto& keys = state.keyboard_views;
         for (u32 i = 0; i < keys.count; i++)
         {
             auto color = keys.key_colors[i];
             auto view = keys.keys[i];
 
-            img::fill_if(view, color, not_black);
+            img::fill_if(view, color, has_color);
         }
 
         img::alpha_blend(state.ui_keyboard, state.screen_keyboard);
@@ -359,11 +353,6 @@ namespace
 
     void render_mouse(app::StateData const& state)
     {
-        auto const has_color = [](Pixel p)
-        {
-            return p.alpha > 0 && (p.red > 0 || p.green > 0 || p.blue > 0);
-        };
-
         auto& buttons = state.mouse_views;
         for (u32 i = 0; i < buttons.count; i++)
         {
