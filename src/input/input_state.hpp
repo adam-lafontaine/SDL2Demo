@@ -15,15 +15,6 @@ namespace input
 	}
 
 
-	inline void reset_button_state(ButtonState& state)
-	{
-		for (u32 i = 0; i < N_STATES; ++i)
-		{
-			state.states[i] = 0;
-		}
-	}
-
-
 	inline void copy_button_state(ButtonState const& src, ButtonState& dst)
 	{
 		dst.is_down = src.is_down;
@@ -80,10 +71,11 @@ namespace input
 	}
 
 
-	inline void copy_mouse_wheel(MouseInput const& src, MouseInput& dst)
+	inline void reset_mouse_wheel(MouseInput& mouse)
 	{
 #if MOUSE_WHEEL
-		copy_vec_2d(src.wheel, dst.wheel);
+		mouse.wheel.x = 0;
+		mouse.wheel.y = 0;
 #endif
 	}	
 
@@ -96,27 +88,8 @@ namespace input
 		}
 
 		copy_mouse_position(src, dst);
-		copy_mouse_wheel(src, dst);
+		reset_mouse_wheel(dst);
 	}	
-
-
-	inline void reset_mouse(MouseInput& mouse)
-	{
-		for (u32 i = 0; i < N_MOUSE_BUTTONS; ++i)
-		{
-			reset_button_state(mouse.buttons[i]);
-		}
-
-#if MOUSE_POSITION
-		mouse.window_pos.x = 0;
-		mouse.window_pos.y = 0;
-#endif
-
-#if MOUSE_WHEEL
-		mouse.wheel.x = 0;
-		mouse.wheel.y = 0;
-#endif
-	}
 }
 
 

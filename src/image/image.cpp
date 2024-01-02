@@ -278,6 +278,22 @@ namespace image
     }
 
 
+    void alpha_blend(ImageView const& src, ImageSubView const& dst)
+    {
+        assert(src.matrix_data_);
+        assert(dst.matrix_data_);
+        assert(src.width == dst.width);
+        assert(src.height == dst.height);
+
+        for (u32 y = 0; y < src.height; y++)
+        {
+            auto s = row_begin(src, y);
+            auto d = row_begin(dst, y);
+            alpha_blend_span(s, d, src.width);
+        }
+    }
+
+
     void alpha_blend(ImageView const& view, Pixel color)
     {
         assert(view.matrix_data_);
