@@ -445,6 +445,14 @@ namespace input
     }
 
 
+    static void record_controller_stick_button(SDL_GameController* sdl_controller, SDL_GameControllerButton btn_key, ButtonState const& old_btn, ButtonState& new_btn, VectorState<f32> const& stick)
+    {
+        // ignore button press if stick is used for direction
+        auto is_down = SDL_GameControllerGetButton(sdl_controller, btn_key) && stick.magnitude < 0.3;
+        record_button_input(old_btn, new_btn, is_down);
+    }
+
+
     static void record_controller_button_input(SDL_GameController* sdl_controller, ControllerInput const& old_controller, ControllerInput& new_controller)
     {
 
@@ -485,13 +493,11 @@ namespace input
         record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, old_controller.btn_shoulder_right, new_controller.btn_shoulder_right);
 #endif
 #if CONTROLLER_BTN_STICK_LEFT
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_LEFTSTICK, old_controller.btn_stick_left, new_controller.btn_stick_left);
+        record_controller_stick_button(sdl_controller, SDL_CONTROLLER_BUTTON_LEFTSTICK, old_controller.btn_stick_left, new_controller.btn_stick_left, new_controller.stick_left);
 #endif
 #if CONTROLLER_BTN_STICK_RIGHT
-        record_controller_button(sdl_controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK, old_controller.btn_stick_right, new_controller.btn_stick_right);        
+        record_controller_stick_button(sdl_controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK, old_controller.btn_stick_right, new_controller.btn_stick_right, new_controller.stick_right);        
 #endif
-
-
 
     }
 
@@ -574,8 +580,10 @@ namespace input
             return;
         }
 
-        record_controller_button_input(sdl_controller, old_controller, new_controller);
         record_controller_axis_input(sdl_controller, new_controller);
+
+        record_controller_button_input(sdl_controller, old_controller, new_controller);
+        
         record_controller_trigger_input(sdl_controller, new_controller);
         record_controller_dpad_vector(new_controller);
     }
