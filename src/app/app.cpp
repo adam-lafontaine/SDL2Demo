@@ -77,31 +77,6 @@ namespace image
 		mb::create_buffer(buffer, n_pixels);
 		return buffer;
 	}
-}
-
-
-/* create destroy */
-
-namespace image
-{
-    bool create_image(Image& image, u32 width, u32 height)
-	{
-		assert(width);
-		assert(height);
-
-		image.data_ = (Pixel*)std::malloc(width * height * sizeof(Pixel));
-		if (!image.data_)
-		{
-			return false;
-		}
-
-		assert(image.data_ && "create_image()");
-
-        image.width = width;
-        image.height = height;
-
-		return true;
-	}
 
     
     void destroy_image(Image& image)
@@ -174,7 +149,7 @@ namespace image
 namespace image
 {
     template <typename T>
-    static MatrixSubView2D<T> t_sub_view(MatrixView2D<T> const& view, Rect2Du32 const& range)
+    static MatrixSubView2D<T> sub_view(MatrixView2D<T> const& view, Rect2Du32 const& range)
     {
         MatrixSubView2D<T> sub_view{};
 
@@ -185,18 +160,6 @@ namespace image
         sub_view.height = range.y_end - range.y_begin;
 
         return sub_view;
-    }
-
-
-    ImageSubView sub_view(ImageView const& view, Rect2Du32 const& range)
-    {
-        return t_sub_view(view, range);
-    }
-
-
-    ImageGraySubView sub_view(ImageGrayView const& view, Rect2Du32 const& range)
-    {
-        return t_sub_view(view, range);
     }
 }
 
@@ -231,42 +194,6 @@ namespace image
                 if (pred(row[x]))
                 {
                     row[x] = gray;
-                }
-            }
-        }
-    }
-}
-
-
-/* scale */
-
-namespace image
-{
-
-    void scale_up_to_mask(ImageView const& src, ImageGrayView const& dst, u32 scale, std::function<bool(Pixel)> const& pred)
-    {
-        assert(src.matrix_data_);
-        assert(dst.matrix_data_);
-        assert(dst.width == src.width * scale);
-        assert(dst.height == src.height * scale);
-
-        for (u32 src_y = 0; src_y < src.height; src_y++)
-        {
-            auto src_row = row_begin(src, src_y);
-            for (u32 src_x = 0; src_x < src.width; src_x++)
-            {
-                auto const s = src_row[src_x];
-
-                auto dst_y = src_y * scale;
-                for (u32 offset_y = 0; offset_y < scale; offset_y++, dst_y++)
-                {
-                    auto dst_row = row_begin(dst, dst_y);
-
-                    auto dst_x = src_x * scale;
-                    for (u32 offset_x = 0; offset_x < scale; offset_x++, dst_x++)
-                    {
-                        dst_row[dst_x] = pred(s) ? 255 : 0;
-                    }
                 }
             }
         }
