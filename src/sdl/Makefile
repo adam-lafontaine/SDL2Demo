@@ -35,6 +35,9 @@ qsprintf_h  := $(qsprintf)/qsprintf.hpp
 memory_buffer_h := $(util)/memory_buffer.hpp
 memory_buffer_h += $(types_h)
 
+stb_image_h := $(util)/stb_image/stb_image.h
+stb_image_h += $(util)/stb_image/stb_include.hpp
+
 #***********
 
 
@@ -59,14 +62,6 @@ sdl_include_h := $(sdl)/sdl_include.hpp
 sdl_include_h += $(input_h)
 
 #**********
-
-
-#*** image ***
-
-image_h := $(image)/image.hpp
-image_h += $(memory_buffer_h)
-
-#*************
 
 
 #*** app ***
@@ -114,19 +109,6 @@ sdl_input_dep += $(input_state_h)
 #************
 
 
-#*** image ***
-
-image_c      := $(image)/image.cpp
-image_o      := $(build)/image.o
-object_files += $(image_o)
-
-image_dep := $(image_h)
-image_dep += $(image)/stb_image.h
-image_dep += $(image)/stb_include.hpp
-
-#************
-
-
 #*** app ***
 
 app_c        := $(app)/app.cpp
@@ -134,7 +116,8 @@ app_o        := $(build)/app.o
 object_files += $(app_o)
 
 app_dep := $(app_h)
-app_dep += $(image_h)
+app_dep += $(memory_buffer_h)
+app_dep += $(stb_image_h)
 
 #************
 
@@ -157,11 +140,6 @@ $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)
 $(app_o): $(app_c) $(app_dep)
 	@echo "\n  app"
 	$(GPP) -o $@ -c $< $(TBB)
-
-
-$(image_o): $(image_c) $(image_dep)
-	@echo "\n  image"
-	$(GPP) -o $@ -c $< $(NO_FLAGS)
 
 
 $(program_exe): $(object_files)
