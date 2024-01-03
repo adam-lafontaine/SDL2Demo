@@ -99,9 +99,9 @@ namespace image
     }
 
 
-    ImageViewGray make_view(u32 width, u32 height, Buffer8& buffer)
+    ImageGrayView make_view(u32 width, u32 height, Buffer8& buffer)
     {
-        ImageViewGray view{};
+        ImageGrayView view{};
 
         view.matrix_data_ = mb::push_elements(buffer, width * height);
         if (view.matrix_data_)
@@ -140,7 +140,7 @@ namespace image
     }
 
 
-    ImageSubViewGray sub_view(ImageViewGray const& view, Rect2Du32 const& range)
+    ImageGraySubView sub_view(ImageGrayView const& view, Rect2Du32 const& range)
     {
         return t_sub_view(view, range);
     }
@@ -188,6 +188,22 @@ namespace image
                 if (pred(row[x]))
                 {
                     row[x] = color;
+                }
+            }
+        }
+    }
+
+
+    void fill_if(ImageGraySubView const& view, u8 gray, std::function<bool(u8)> const& pred)
+    {
+        for (u32 y = 0; y < view.height; y++)
+        {
+            auto row = row_begin(view, y);
+            for (u32 x = 0; x < view.width; x++)
+            {
+                if (pred(row[x]))
+                {
+                    row[x] = gray;
                 }
             }
         }
@@ -333,8 +349,6 @@ namespace image
         assert(dst.width == src.width * scale);
         assert(dst.height == src.height * scale);
 
-        u32 i = 0;
-
         for (u32 src_y = 0; src_y < src.height; src_y++)
         {
             auto src_row = row_begin(src, src_y);
@@ -351,22 +365,91 @@ namespace image
                     for (u32 offset_x = 0; offset_x < scale; offset_x++, dst_x++)
                     {
                         dst_row[dst_x] = s;
-                        i++;
                     }
                 }
             }
         }
 
-        assert(i == dst.width * dst.height);
+    }
+
+
+    void scale_up_to_mask(ImageView const& src, BinaryView const& dst, u32 scale, std::function<bool(Pixel)> const& pred)
+    {
+        assert(src.matrix_data_);
+        assert(dst.matrix_data_);
+        assert(dst.width == src.width * scale);
+        assert(dst.height == src.height * scale);
+
+        for (u32 src_y = 0; src_y < src.height; src_y++)
+        {
+            auto src_row = row_begin(src, src_y);
+            for (u32 src_x = 0; src_x < src.width; src_x++)
+            {
+                auto const s = src_row[src_x];
+
+                auto dst_y = src_y * scale;
+                for (u32 offset_y = 0; offset_y < scale; offset_y++, dst_y++)
+                {
+                    auto dst_row = row_begin(dst, dst_y);
+
+                    auto dst_x = src_x * scale;
+                    for (u32 offset_x = 0; offset_x < scale; offset_x++, dst_x++)
+                    {
+                        dst_row[dst_x] = pred(s) ? 255 : 0;
+                    }
+                }
+            }
+        }
     }
 }
 
 
-/* map */
+/* transform */
 
 namespace image
 {
+    void transform(ImageGrayView const& src, ImageSubView const& dst, std::function<Pixel(u8, Pixel)> const& func)
+    {
+        for (u32 y = 0; y < src.height; y++)
+        {
+            auto s = row_begin(src, y);
+            auto d = row_begin(dst, y);
+            for (u32 x = 0; x < src.width; x++)
+            {
+                d[x] = func(s[x], d[x]);
+            }
+        }
+    }
 
+
+    void transform_scale_up(ImageView const& src, BinaryView const& dst, u32 scale, std::function<u8(Pixel)> const& func)
+    {
+        assert(src.matrix_data_);
+        assert(dst.matrix_data_);
+        assert(dst.width == src.width * scale);
+        assert(dst.height == src.height * scale);
+
+        for (u32 src_y = 0; src_y < src.height; src_y++)
+        {
+            auto src_row = row_begin(src, src_y);
+            for (u32 src_x = 0; src_x < src.width; src_x++)
+            {
+                auto const s = src_row[src_x];
+
+                auto dst_y = src_y * scale;
+                for (u32 offset_y = 0; offset_y < scale; offset_y++, dst_y++)
+                {
+                    auto dst_row = row_begin(dst, dst_y);
+
+                    auto dst_x = src_x * scale;
+                    for (u32 offset_x = 0; offset_x < scale; offset_x++, dst_x++)
+                    {
+                        dst_row[dst_x] = func(s);
+                    }
+                }
+            }
+        }
+    }
 }
 
 

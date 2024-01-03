@@ -1,6 +1,8 @@
 #include "app.hpp"
 #include "../image/image.hpp"
 
+#include <array>
+
 
 #ifndef NDEBUG
 #include <cstdio>
@@ -13,7 +15,14 @@ namespace img = image;
 namespace fs = std::filesystem;
 
 using ImageSubView = img::ImageSubView;
+using MaskView = img::ImageGraySubView;
 
+
+constexpr auto WHITE = img::to_pixel(255, 255, 255);
+constexpr auto BLACK = img::to_pixel(0, 0, 0);
+constexpr auto TRANSPARENT = img::to_pixel(0, 0, 0, 0);
+constexpr auto BTN_BLUE = img::to_pixel(0, 0, 200);
+constexpr auto BTN_RED = img::to_pixel(200, 0, 0);
 
 
 /* image files */
@@ -27,6 +36,7 @@ namespace
 
     const auto KEYBOARD_IMAGE_PATH = ASSETS_DIR / "keyboard.png";
     const auto MOUSE_IMAGE_PATH = ASSETS_DIR / "mouse.png";
+    const auto CONTROLLER_IMAGE_PATH = ASSETS_DIR / "controller.png";
 
 
     bool load_keyboard_image(Image& image)
@@ -51,6 +61,17 @@ namespace
     }
 
 
+    bool load_controller_image(Image& image)
+    {
+        if (!img::read_image_from_file(CONTROLLER_IMAGE_PATH, image))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+
     bool has_color(Pixel p)
     {
         return p.alpha > 0 && (p.red > 0 || p.green > 0 || p.blue > 0);
@@ -58,153 +79,259 @@ namespace
 }
 
 
-namespace ui
+namespace mask
 {
-    constexpr auto WHITE = img::to_pixel(255, 255, 255);
-    constexpr auto KEY_BLUE = img::to_pixel(0, 0, 200);
-    constexpr auto KEY_RED = img::to_pixel(200, 0, 0);
-
-
-    class UILocation
+    static constexpr std::array<Pixel, 5> COLOR_TABLE = 
     {
-    public:
-        u16 x;
-        u16 y;
-        u16 width;
-        u16 height;
+        TRANSPARENT,
+        BLACK,
+        WHITE,        
+        BTN_BLUE,
+        BTN_RED
     };
 
 
-    static constexpr UILocation to_ui_loc(u16 x, u16 y, u16 width, u16 height)
+    constexpr u8 ID_BLUE = 3;
+    constexpr u8 ID_RED = 4;    
+
+
+    u8 to_mask_color_id(Pixel p)
     {
-        UILocation kd{};
+        if (p.alpha == 0)
+        {
+            return 0; // TRANSPARENT
+        }
 
-        kd.x = x;
-        kd.y = y;
-        kd.width = width;
-        kd.height = height;
+        if (p.red == 0 && p.green == 0 && p.blue == 0)
+        {
+            return 1; // BLACK
+        }
 
-        return kd;
+        return 2; // WHITE
     }
 
 
-    static ImageSubView get_sub_view(ImageView const& view, UILocation const& loc)
+    bool can_set_color_id(u8 current_id)
     {
-        Rect2Du32 range{};
-        range.x_begin = loc.x;
-        range.x_end = loc.x + loc.width;
-        range.y_begin = loc.y;
-        range.y_end = loc.y + loc.height;
-
-        return img::sub_view(view, range);
+        return current_id > 1;
     }
 
 
-    class KeyboardViews
+    Pixel to_render_color(u8 mask, Pixel color)
+    {
+        if (mask == 0)
+        {
+            return color;
+        }
+
+        return COLOR_TABLE[mask];
+    }
+
+    
+    class KeyboardMasks
     {
     public:
+        img::ImageGrayView mask_view;
 
         static constexpr u32 count = 9;
         
         union 
         {
-            ImageSubView keys[count];
+            MaskView keys[count];
 
             struct
             {
-                ImageSubView key_1;
-                ImageSubView key_2;
-                ImageSubView key_3;
-                ImageSubView key_4;
-                ImageSubView key_w;
-                ImageSubView key_a;
-                ImageSubView key_s;
-                ImageSubView key_d;
-                ImageSubView key_space;
+                MaskView key_1;
+                MaskView key_2;
+                MaskView key_3;
+                MaskView key_4;
+                MaskView key_w;
+                MaskView key_a;
+                MaskView key_s;
+                MaskView key_d;
+                MaskView key_space;
             };            
         };
 
         union
         {
-            Pixel key_colors[count];
+            u8 color_ids[count];
 
             struct 
             {
-                Pixel color_1;
-                Pixel color_2;
-                Pixel color_3;
-                Pixel color_4;
-                Pixel color_w;
-                Pixel color_a;
-                Pixel color_s;
-                Pixel color_d;
-                Pixel color_space;
+                u8 color_1;
+                u8 color_2;
+                u8 color_3;
+                u8 color_4;
+                u8 color_w;
+                u8 color_a;
+                u8 color_s;
+                u8 color_d;
+                u8 color_space;
+                
             };
-        };        
+        };
     };
 
 
-    class MouseViews
+    class MouseMasks
     {
     public:
+        img::ImageGrayView mask_view;
+
+
         static constexpr u32 count = 3;
 
         union 
         {
-            ImageSubView buttons[count];
+            MaskView buttons[count];
 
             struct
             {
-                ImageSubView btn_left;
-                ImageSubView btn_middle;
-                ImageSubView btn_right;
-            };            
+                MaskView btn_left;
+                MaskView btn_middle;
+                MaskView btn_right;
+            };
         };
 
         union
         {
-            Pixel btn_colors[count];
+            u8 color_ids[count];
 
-            struct 
+            struct
             {
-                Pixel color_left;
-                Pixel color_middle;
-                Pixel color_right;
+                u8 color_left;
+                u8 color_middle;
+                u8 color_right;
+            };
+        };
+    };
+
+
+    class ControllerMasks
+    {
+    public:
+    img::ImageGrayView mask_view;
+
+
+        static constexpr u32 count = 16;
+
+        union
+        {
+            MaskView buttons[count];
+
+            struct
+            {
+                MaskView btn_dpad_up;
+                MaskView btn_dpad_down;
+                MaskView btn_dpad_left;
+                MaskView btn_dpad_right;
+                MaskView btn_a;
+                MaskView btn_b;
+                MaskView btn_x;
+                MaskView btn_y;
+                MaskView btn_start;
+                MaskView btn_back;
+                MaskView btn_sh_left;
+                MaskView btn_sh_right;
+                MaskView btn_tr_left;
+                MaskView btn_tr_right;
+                MaskView btn_st_left;
+                MaskView btn_st_right;
             };
         };
 
+        union
+        {
+            u8 color_ids[count];
 
+            struct
+            {
+                u8 color_dpad_up;
+                u8 color_dpad_down;
+                u8 color_dpad_left;
+                u8 color_dpad_right;
+                u8 color_a;
+                u8 color_b;
+                u8 color_x;
+                u8 color_y;
+                u8 color_start;
+                u8 color_back;
+                u8 color_sh_left;
+                u8 color_sh_right;
+                u8 color_tr_left;
+                u8 color_tr_right;
+                u8 color_st_left;
+                u8 color_st_right;
+            };
+        };
 
     };
 
 
-    KeyboardViews make_ui_keyboard_views(ImageView const& keyboard_view)
+    
+    static Rect2Du32 to_rect(u16 x, u16 y, u16 width, u16 height)
     {
-        KeyboardViews kv{};
+        Rect2Du32 range{};
+        range.x_begin = x;
+        range.x_end = x + width;
+        range.y_begin = y;
+        range.y_end = y + height;
 
-        kv.key_1 = get_sub_view(keyboard_view, to_ui_loc( 42,   6,  28, 28));
-        kv.key_2 = get_sub_view(keyboard_view, to_ui_loc( 78,   6,  28, 28));
-        kv.key_3 = get_sub_view(keyboard_view, to_ui_loc(114,   6,  28, 28));
-        kv.key_4 = get_sub_view(keyboard_view, to_ui_loc(150,   6,  28, 28));
-        kv.key_w = get_sub_view(keyboard_view, to_ui_loc( 96,  42,  28, 28));
-        kv.key_a = get_sub_view(keyboard_view, to_ui_loc( 70,  78,  28, 28));
-        kv.key_s = get_sub_view(keyboard_view, to_ui_loc(106,  78,  28, 28));
-        kv.key_d = get_sub_view(keyboard_view, to_ui_loc(142,  78,  28, 28));
-        kv.key_space = get_sub_view(keyboard_view, to_ui_loc(168, 150, 208, 28));
-
-        return kv;
+        return range;
     }
 
 
-    MouseViews make_ui_mouse_views(ImageView const& mouse_view)
+    static void make_keyboard_masks(KeyboardMasks& masks)
     {
-        MouseViews mv{};
+        auto& keyboard_view = masks.mask_view;
+        
+        masks.key_1 = img::sub_view(keyboard_view, to_rect( 42,   6,  28, 28));
+        masks.key_2 = img::sub_view(keyboard_view, to_rect( 78,   6,  28, 28));
+        masks.key_3 = img::sub_view(keyboard_view, to_rect(114,   6,  28, 28));
+        masks.key_4 = img::sub_view(keyboard_view, to_rect(150,   6,  28, 28));
+        masks.key_w = img::sub_view(keyboard_view, to_rect( 96,  42,  28, 28));
+        masks.key_a = img::sub_view(keyboard_view, to_rect( 70,  78,  28, 28));
+        masks.key_s = img::sub_view(keyboard_view, to_rect(106,  78,  28, 28));
+        masks.key_d = img::sub_view(keyboard_view, to_rect(142,  78,  28, 28));
+        masks.key_space = img::sub_view(keyboard_view, to_rect(168, 150, 208, 28));
+    }
 
-        mv.btn_left = get_sub_view(mouse_view, to_ui_loc(4, 4, 56, 58));
-        mv.btn_middle = get_sub_view(mouse_view, to_ui_loc(68, 4, 24, 58));
-        mv.btn_right = get_sub_view(mouse_view, to_ui_loc(100, 4, 56, 58));
 
-        return mv;
+    static void make_mouse_masks(MouseMasks& masks)
+    {
+        auto& mouse_view = masks.mask_view;
+
+        masks.btn_left = img::sub_view(mouse_view, to_rect(4, 4, 56, 58));
+        masks.btn_middle = img::sub_view(mouse_view, to_rect(68, 4, 24, 58));
+        masks.btn_right = img::sub_view(mouse_view, to_rect(100, 4, 56, 58));
+    }
+
+
+    static void make_controller_masks(ControllerMasks& masks)
+    {
+        auto& controller_view = masks.mask_view;
+
+        masks.btn_dpad_up    = img::sub_view(controller_view, to_rect(44,  66, 18, 32));
+        masks.btn_dpad_down  = img::sub_view(controller_view, to_rect(44, 120, 18, 32));
+        masks.btn_dpad_left  = img::sub_view(controller_view, to_rect(10, 100, 32, 18));
+        masks.btn_dpad_right = img::sub_view(controller_view, to_rect(64, 100, 32, 18));
+
+        masks.btn_a = img::sub_view(controller_view, to_rect(318, 126, 26, 26));
+        masks.btn_b = img::sub_view(controller_view, to_rect(348,  96, 26, 26));
+        masks.btn_x = img::sub_view(controller_view, to_rect(288,  96, 26, 26));
+        masks.btn_y = img::sub_view(controller_view, to_rect(318,  66, 26, 26));
+
+        masks.btn_start = img::sub_view(controller_view, to_rect(206, 48, 28, 14));
+        masks.btn_back  = img::sub_view(controller_view, to_rect(150, 48, 28, 14));
+
+        masks.btn_sh_left  = img::sub_view(controller_view, to_rect( 36, 44, 34, 14));
+        masks.btn_sh_right = img::sub_view(controller_view, to_rect(314, 44, 34, 14));
+        masks.btn_tr_left  = img::sub_view(controller_view, to_rect( 36, 10, 34, 26));
+        masks.btn_tr_right = img::sub_view(controller_view, to_rect(314, 10, 34, 26));
+
+        masks.btn_st_left  = img::sub_view(controller_view, to_rect(120, 90, 46, 46));
+        masks.btn_st_right = img::sub_view(controller_view, to_rect(218, 90, 46, 46));
     }
 }
 
@@ -216,18 +343,17 @@ namespace app
     public:
 
         Pixel background_color;
-
-        ImageView ui_keyboard;
-        ui::KeyboardViews keyboard_views;
-
-        ImageView ui_mouse;
-        ui::MouseViews mouse_views;
+        
+        mask::KeyboardMasks keyboard_mask;        
+        mask::MouseMasks mouse_mask;
+        mask::ControllerMasks controller_mask;
 
         b32 is_init;
         ImageSubView screen_keyboard;
         ImageSubView screen_mouse;
-
-        MemoryBuffer<Pixel> image_data;
+        ImageSubView screen_controller;
+        
+        MemoryBuffer<u8> mask_data;
     };
 
 
@@ -249,7 +375,7 @@ namespace app
     {
         auto& state_data = *state.data_;
         
-        mb::destroy_buffer(state_data.image_data);
+        mb::destroy_buffer(state_data.mask_data);
 
         std::free(state.data_);
     }
@@ -260,29 +386,22 @@ namespace app
 
 namespace
 {
-    void init_keyboard(app::StateData& state, Image const& raw_keyboard, u32 up_scale, img::Buffer32& buffer)
+    void init_keyboard_mask(mask::KeyboardMasks& masks, Image const& raw_keyboard, u32 up_scale, img::Buffer8& buffer)
     {
         auto width = raw_keyboard.width * up_scale;
         auto height = raw_keyboard.height * up_scale;
 
-        state.ui_keyboard = img::make_view(width, height, buffer);        
-        img::scale_up(img::make_view(raw_keyboard), state.ui_keyboard, up_scale);
-        
-        state.keyboard_views = ui::make_ui_keyboard_views(state.ui_keyboard);
+        masks.mask_view = img::make_view(width, height, buffer);
+        img::transform_scale_up(img::make_view(raw_keyboard), masks.mask_view, up_scale, mask::to_mask_color_id);
 
-        auto& keys = state.keyboard_views;
-        for (u32 i = 0; i < keys.count; i++)
-        {
-            keys.key_colors[i] = ui::WHITE;
-            img::fill_if(keys.keys[i], keys.key_colors[i], has_color);
-        }
+        mask::make_keyboard_masks(masks);
     }
 
 
-    void update_key_colors(ui::KeyboardViews& keys, input::Input const& input)
+    void update_key_colors(mask::KeyboardMasks& keys, input::Input const& input)
     {
-        constexpr auto key_on = ui::KEY_RED;
-        constexpr auto key_off = ui::KEY_BLUE;
+        constexpr auto key_on = mask::ID_RED;
+        constexpr auto key_off = mask::ID_BLUE;
 
         keys.color_1 = input.keyboard.kbd_1.is_down ? key_on : key_off;
         keys.color_2 = input.keyboard.kbd_2.is_down ? key_on : key_off;
@@ -301,33 +420,79 @@ namespace
 
 namespace
 {
-    void init_mouse(app::StateData& state, Image const& raw_mouse, u32 up_scale, img::Buffer32& buffer)
+    void init_mouse_mask(mask::MouseMasks& masks, Image const& raw_mouse, u32 up_scale, img::Buffer8& buffer)
     {
         auto width = raw_mouse.width * up_scale;
         auto height = raw_mouse.height * up_scale;
 
-        state.ui_mouse = img::make_view(width, height, buffer);        
-        img::scale_up(img::make_view(raw_mouse), state.ui_mouse, up_scale);
-        
-        state.mouse_views = ui::make_ui_mouse_views(state.ui_mouse);
+        masks.mask_view = img::make_view(width, height, buffer);
+        img::transform_scale_up(img::make_view(raw_mouse), masks.mask_view, up_scale, mask::to_mask_color_id);
 
-        auto& buttons = state.mouse_views;
-        for (u32 i = 0; i < buttons.count; i++)
-        {
-            buttons.btn_colors[i] = ui::WHITE;
-            img::fill_if(buttons.buttons[i], buttons.btn_colors[i], has_color);
-        }
+        mask::make_mouse_masks(masks);
     }
 
 
-    void update_mouse_colors(ui::MouseViews& buttons, input::Input const& input)
+    void update_mouse_colors(mask::MouseMasks& buttons, input::Input const& input)
     {
-        constexpr auto btn_on = ui::KEY_RED;
-        constexpr auto btn_off = ui::KEY_BLUE;
+        constexpr auto btn_on = mask::ID_RED;
+        constexpr auto btn_off = mask::ID_BLUE;
 
         buttons.color_left = input.mouse.btn_left.is_down ? btn_on : btn_off;
         buttons.color_right = input.mouse.btn_right.is_down ? btn_on : btn_off;
         buttons.color_middle = (input.mouse.btn_middle. is_down || input.mouse.wheel.y != 0) ? btn_on : btn_off;
+    }
+}
+
+
+/* controller */
+
+namespace
+{
+    void init_controller_mask(mask::ControllerMasks& masks, Image const& raw_controller, u32 up_scale, img::Buffer8& buffer)
+    {
+        auto width = raw_controller.width * up_scale;
+        auto height = raw_controller.height * up_scale;
+
+        masks.mask_view = img::make_view(width, height, buffer);
+        img::transform_scale_up(img::make_view(raw_controller), masks.mask_view, up_scale, mask::to_mask_color_id);
+
+        mask::make_controller_masks(masks);
+    }
+
+
+    void update_controller_colors(mask::ControllerMasks& buttons, input::Input const& input)
+    {
+        constexpr auto btn_on = mask::ID_RED;
+        constexpr auto btn_off = mask::ID_BLUE;
+
+        buttons.color_dpad_up = input.controller.btn_dpad_up.is_down ? btn_on : btn_off;
+        buttons.color_dpad_down = input.controller.btn_dpad_down.is_down ? btn_on : btn_off;
+        buttons.color_dpad_left = input.controller.btn_dpad_left.is_down ? btn_on : btn_off;
+        buttons.color_dpad_right = input.controller.btn_dpad_right.is_down ? btn_on : btn_off;
+
+        buttons.color_a = input.controller.btn_a.is_down ? btn_on : btn_off;
+        buttons.color_b = input.controller.btn_b.is_down ? btn_on : btn_off;
+        buttons.color_x = input.controller.btn_x.is_down ? btn_on : btn_off;
+        buttons.color_y = input.controller.btn_y.is_down ? btn_on : btn_off;
+
+        buttons.color_start = input.controller.btn_start.is_down ? btn_on : btn_off;
+        buttons.color_back = input.controller.btn_back.is_down ? btn_on : btn_off;
+
+        buttons.color_sh_left = input.controller.btn_shoulder_left.is_down ? btn_on : btn_off;
+        buttons.color_sh_right = input.controller.btn_shoulder_right.is_down ? btn_on : btn_off;
+
+        buttons.color_tr_left = input.controller.trigger_left > 0.0f ? btn_on : btn_off;
+        buttons.color_tr_right = input.controller.trigger_right > 0.0f ? btn_on : btn_off;
+
+        buttons.color_st_left = 
+            input.controller.stick_left.magnitude > 0.3f ||
+            input.controller.btn_stick_left.is_down            
+            ? btn_on : btn_off;
+        
+        buttons.color_st_right = 
+            input.controller.stick_right.magnitude > 0.3f ||
+            input.controller.btn_stick_right.is_down            
+            ? btn_on : btn_off;
     }
 }
 
@@ -338,55 +503,83 @@ namespace
 {
     void render_keyboard(app::StateData const& state)
     {
-        auto& keys = state.keyboard_views;
+        auto& keys = state.keyboard_mask;
+        
         for (u32 i = 0; i < keys.count; i++)
         {
-            auto color = keys.key_colors[i];
-            auto view = keys.keys[i];
+            auto color_id = keys.color_ids[i];
+            auto mask = keys.keys[i];
 
-            img::fill_if(view, color, has_color);
+            img::fill_if(mask, color_id, mask::can_set_color_id);
         }
 
-        img::alpha_blend(state.ui_keyboard, state.screen_keyboard);
+        img::transform(keys.mask_view, state.screen_keyboard, mask::to_render_color);
     }
 
 
     void render_mouse(app::StateData const& state)
     {
-        auto& buttons = state.mouse_views;
+        auto& buttons = state.mouse_mask;
+
         for (u32 i = 0; i < buttons.count; i++)
         {
-            auto color = buttons.btn_colors[i];
-            auto view = buttons.buttons[i];
-            img::fill_if(view, color, has_color);
+            auto color_id = buttons.color_ids[i];
+            auto mask = buttons.buttons[i];
+            
+            img::fill_if(mask, color_id, mask::can_set_color_id);
         }
 
-        img::alpha_blend(state.ui_mouse, state.screen_mouse);
+        img::transform(buttons.mask_view, state.screen_mouse, mask::to_render_color);
+    }
+
+
+    void render_controller(app::StateData const& state)
+    {
+        auto& buttons = state.controller_mask;
+
+        for (u32 i = 0; i < buttons.count; i++)
+        {
+            auto color_id = buttons.color_ids[i];
+            auto mask = buttons.buttons[i];
+            
+            img::fill_if(mask, color_id, mask::can_set_color_id);
+        }
+
+        img::transform(buttons.mask_view, state.screen_controller, mask::to_render_color);
     }
 }
 
 
+/* init */
+
 namespace
 {
-    static void init_screen_ui(app::AppState& state)
+    void init_screen_ui(app::AppState& state)
     {
         auto& state_data = *state.data_;
         auto& screen = state.screen_view;
 
-        Rect2Du32 kbd{};
-        kbd.x_begin = 0;
-        kbd.x_end = kbd.x_begin + state_data.ui_keyboard.width;
-        kbd.y_begin = 0;
-        kbd.y_end = kbd.y_begin + state_data.ui_keyboard.height;
+        Rect2Du32 keyboard{};
+        keyboard.x_begin = 0;
+        keyboard.x_end = keyboard.x_begin + state_data.keyboard_mask.mask_view.width;
+        keyboard.y_begin = 0;
+        keyboard.y_end = keyboard.y_begin + state_data.keyboard_mask.mask_view.height;
+
+        Rect2Du32 controller{};
+        controller.x_begin = 0;
+        controller.x_end = controller.x_begin + state_data.controller_mask.mask_view.width;
+        controller.y_begin = keyboard.y_end;
+        controller.y_end = controller.y_begin + state_data.controller_mask.mask_view.height;
 
         Rect2Du32 mouse{};
-        mouse.x_begin = kbd.x_end;
-        mouse.x_end = mouse.x_begin + state_data.ui_mouse.width;
-        mouse.y_begin = kbd.y_begin;
-        mouse.y_end = mouse.y_begin + state_data.ui_mouse.height;
+        mouse.x_begin = controller.x_end;
+        mouse.x_end = mouse.x_begin + state_data.mouse_mask.mask_view.width;
+        mouse.y_begin = controller.y_begin;
+        mouse.y_end = mouse.y_begin + state_data.mouse_mask.mask_view.height;
 
-        state_data.screen_keyboard = img::sub_view(screen, kbd);
+        state_data.screen_keyboard = img::sub_view(screen, keyboard);
         state_data.screen_mouse = img::sub_view(screen, mouse);
+        state_data.screen_controller = img::sub_view(screen, controller);
     }
 }
 
@@ -405,14 +598,17 @@ namespace app
         
         Image raw_keyboard;
         Image raw_mouse;
+        Image raw_controller;
 
         constexpr u32 keyboard_scale = 2;
         constexpr u32 mouse_scale = 2;
+        constexpr u32 controller_scale = 2;
 
         auto const cleanup = [&]()
         {
             img::destroy_image(raw_keyboard);
             img::destroy_image(raw_mouse);
+            img::destroy_image(raw_controller);
         };
 
         if (!load_keyboard_image(raw_keyboard))
@@ -428,6 +624,13 @@ namespace app
             cleanup();
             return false;
         }
+
+        if (!load_controller_image(raw_controller))
+        {
+            printf("Error: load_controller_image()\n");
+            cleanup();
+            return false;
+        }
         
         auto const keyboard_width = raw_keyboard.width * keyboard_scale;
         auto const keyboard_height = raw_keyboard.height * keyboard_scale;
@@ -435,17 +638,21 @@ namespace app
         auto const mouse_width = raw_mouse.width * mouse_scale;
         auto const mouse_height = raw_mouse.height * mouse_scale;
 
-        u32 screen_width = keyboard_width + mouse_width;
-        u32 screen_height = std::max(keyboard_height, mouse_height);
+        auto const controller_width = raw_controller.width * controller_scale;
+        auto const controller_height = raw_controller.height * controller_scale;
+
+        u32 screen_width = std::max(keyboard_width, controller_width + mouse_width);
+        u32 screen_height = keyboard_height + std::max(mouse_height, controller_height);
 
         auto& state_data = *state.data_;
         state_data.is_init = false;
 
-        auto& pixel_buffer = state_data.image_data;
-        pixel_buffer = img::create_buffer32(screen_width * screen_height);        
+        auto& mask_buffer = state_data.mask_data;
+        mask_buffer = img::create_buffer8(screen_width * screen_height);   
 
-        init_keyboard(state_data, raw_keyboard, keyboard_scale, pixel_buffer);
-        init_mouse(state_data, raw_mouse, mouse_scale, pixel_buffer);        
+        init_keyboard_mask(state_data.keyboard_mask, raw_keyboard, keyboard_scale, mask_buffer);
+        init_mouse_mask(state_data.mouse_mask, raw_mouse, mouse_scale, mask_buffer);
+        init_controller_mask(state_data.controller_mask, raw_controller, controller_scale, mask_buffer);
         
         auto& screen = state.screen_view;
 
@@ -471,12 +678,14 @@ namespace app
             state_data.is_init = true;
         }
 
-        update_key_colors(state_data.keyboard_views, input);
-        update_mouse_colors(state_data.mouse_views, input);
+        update_key_colors(state_data.keyboard_mask, input);
+        update_mouse_colors(state_data.mouse_mask, input);
+        update_controller_colors(state_data.controller_mask, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data);
         render_mouse(state_data);
+        render_controller(state_data);
     }
 
 
