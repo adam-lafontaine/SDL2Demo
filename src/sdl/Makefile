@@ -71,7 +71,7 @@ app_h += $(input_h)
 #************
 
 
-#*** main ***
+#*** main cpp ***
 
 main_c         := $(sdl)/sdl_main.cpp
 main_o         := $(build)/main.o
@@ -84,7 +84,7 @@ main_dep += $(app_h)
 #************
 
 
-#*** sdl ***
+#*** sdl cpp ***
 
 sdl_input_c  := $(sdl)/sdl_input.cpp
 sdl_input_o  := $(build)/sdl_input.o
@@ -96,7 +96,7 @@ sdl_input_dep += $(input_state_h)
 #************
 
 
-#*** util.cpp ***
+#*** util cpp ***
 
 util_c       := $(util)/util.cpp
 util_o       := $(build)/util.o
@@ -109,7 +109,7 @@ util_dep += $(stb_image)/stb_image_options.hpp
 #************
 
 
-#*** app ***
+#*** app cpp ***
 
 app_c        := $(app)/app.cpp
 app_o        := $(build)/app.o
