@@ -2,7 +2,25 @@
 
 A starter application that detects keyboard, mouse and game controller input using SDL2.
 
-## Linux
+## Setup Instructions
+
+Set the `ROOT` constant in `app.hpp` to where you cloned the repository
+
+```
+namespace config
+{
+    constexpr auto APP_TITLE = "SDL2 Demo";
+
+
+#ifdef _WIN32
+    constexpr auto ROOT = "C:/D_Data/Repos";
+#else
+    constexpr auto ROOT = "/home/adam/Repos";
+#endif
+}
+```
+
+### Linux (Ubuntu)
 
 Install SDL2  
 
@@ -28,3 +46,13 @@ Run the application
 ```
 make run
 ```
+
+### Windows
+
+Install SDL2
+
+```
+.\vcpkg.exe install sdl2:x64-windows
+```
+
+Run the Visual Studio solution in /VS/SDL2Demo
