@@ -18,10 +18,10 @@
 //#define STBI_NEON
 
 /*
-#include "../../src/util/mem.hpp"
-#define STBI_MALLOC mem::v_malloc
-#define STBI_REALLOC mem::v_realloc
-#define STBI_FREE mem::v_free
+#include "???"
+#define STBI_MALLOC ???
+#define STBI_REALLOC ???
+#define STBI_FREE ???
 */
 
 #define STB_IMAGE_IMPLEMENTATION

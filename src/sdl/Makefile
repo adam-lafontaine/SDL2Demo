@@ -26,6 +26,7 @@ program_exe := $(build)/$(exe)
 #*** util ***
 
 qsprintf := $(util)/qsprintf
+stb_image := $(util)/stb_image
 
 types_h     := $(util)/types.hpp
 stopwatch_h := $(util)/stopwatch.hpp
@@ -34,8 +35,7 @@ qsprintf_h  := $(qsprintf)/qsprintf.hpp
 memory_buffer_h := $(util)/memory_buffer.hpp
 memory_buffer_h += $(types_h)
 
-stb_image_h := $(util)/stb_image/stb_image.h
-stb_image_h += $(util)/stb_image/stb_include.hpp
+stb_image_h := $(stb_image)/stb_image.h
 
 #***********
 
@@ -71,7 +71,7 @@ app_h += $(input_h)
 #************
 
 
-#*** main ***
+#*** main cpp ***
 
 main_c         := $(sdl)/sdl_main.cpp
 main_o         := $(build)/main.o
@@ -84,19 +84,7 @@ main_dep += $(app_h)
 #************
 
 
-#*** util ***
-
-util_c       := $(util)/util.cpp
-util_o       := $(build)/util.o
-object_files += $(util_o)
-
-util_dep := $(qsprintf_h)
-util_dep += $(qsprintf)/qsprintf.cpp
-
-#************
-
-
-#*** sdl ***
+#*** sdl cpp ***
 
 sdl_input_c  := $(sdl)/sdl_input.cpp
 sdl_input_o  := $(build)/sdl_input.o
@@ -108,7 +96,20 @@ sdl_input_dep += $(input_state_h)
 #************
 
 
-#*** app ***
+#*** util cpp ***
+
+util_c       := $(util)/util.cpp
+util_o       := $(build)/util.o
+object_files += $(util_o)
+
+util_dep := $(qsprintf_h)
+util_dep += $(qsprintf)/qsprintf.cpp
+util_dep += $(stb_image)/stb_image_options.hpp
+
+#************
+
+
+#*** app cpp ***
 
 app_c        := $(app)/app.cpp
 app_o        := $(build)/app.o
@@ -126,14 +127,14 @@ $(main_o): $(main_c) $(main_dep)
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
-$(util_o): $(util_c) $(util_dep)
-	@echo "\n  util"
-	$(GPP) -o $@ -c $< $(NO_FLAGS)
-
-
 $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)
 	@echo "\n  sdl_input"
 	$(GPP) -o $@ -c $< $(SDL2)
+
+
+$(util_o): $(util_c) $(util_dep)
+	@echo "\n  util"
+	$(GPP) -o $@ -c $< $(NO_FLAGS)
 
 
 $(app_o): $(app_c) $(app_dep)

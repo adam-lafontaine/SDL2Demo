@@ -1,6 +1,6 @@
 #include "app.hpp"
 #include "../util/memory_buffer.hpp"
-#include "../util/stb_image/stb_include.hpp"
+#include "../util/stb_image/stb_image.h"
 
 #include <filesystem>
 #include <functional>
@@ -320,9 +320,9 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    constexpr auto ROOT = "/home/adam/Repos/SDL2Demo";
+    
 
-    const auto ROOT_DIR = fs::path(ROOT);
+    const auto ROOT_DIR = fs::path(config::ROOT)/"SDL2Demo";
     const auto ASSETS_DIR = ROOT_DIR / "assets";
 
     const auto KEYBOARD_IMAGE_PATH = ASSETS_DIR / "keyboard.png";
