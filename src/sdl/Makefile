@@ -5,10 +5,9 @@ GPP := g++-11 -std=c++17
 
 # apt-get install libsdl2-dev
 SDL2 := `sdl2-config --cflags --libs`
-TBB := -ltbb
 NO_FLAGS := 
 
-ALL_LFLAGS := $(SDL2) $(TBB)
+ALL_LFLAGS := $(SDL2)
 
 root  := ../..
 build := $(root)/build/sdl
@@ -139,7 +138,7 @@ $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)
 
 $(app_o): $(app_c) $(app_dep)
 	@echo "\n  app"
-	$(GPP) -o $@ -c $< $(TBB)
+	$(GPP) -o $@ -c $< $(NO_FLAGS)
 
 
 $(program_exe): $(object_files)

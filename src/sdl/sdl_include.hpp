@@ -9,7 +9,9 @@
 
 #include <SDL2/SDL.h>
 
+#ifndef NDEBUG
 #define PRINT_MESSAGES
+#endif
 
 #ifdef PRINT_MESSAGES
 #include <cstdio>
