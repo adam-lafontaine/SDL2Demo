@@ -1,6 +1,6 @@
 #include "app.hpp"
 #include "../util/memory_buffer.hpp"
-#include "../util/stb_image/stb_include.hpp"
+#include "../util/stb_image/stb_image.h"
 
 #include <filesystem>
 #include <functional>
