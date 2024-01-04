@@ -12,7 +12,7 @@
 #include <cassert>
 
 
-constexpr auto WINDOW_TITLE = app::APP_TITLE;
+constexpr auto WINDOW_TITLE = config::APP_TITLE;
 
 constexpr f64 NANO = 1'000'000'000;
 

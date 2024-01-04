@@ -4,9 +4,6 @@
 
 namespace app
 {
-    constexpr auto APP_TITLE = "SDL2 Demo";
-
-
     class StateData;
 
 
@@ -25,4 +22,17 @@ namespace app
 
     void close(AppState& state);
 
+}
+
+
+namespace config
+{
+    constexpr auto APP_TITLE = "SDL2 Demo";
+
+
+#ifdef _WIN32
+    constexpr auto ROOT = "C:/D_Data/Repos";
+#else
+    constexpr auto ROOT = "/home/adam/Repos";
+#endif
 }
