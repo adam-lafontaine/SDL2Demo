@@ -320,9 +320,13 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    constexpr auto ROOT = "/home/adam/Repos/SDL2Demo";
+#ifdef _WIN32
+    constexpr auto ROOT = "C:/D_Data/Repos";
+#else
+    constexpr auto ROOT = "/home/adam/Repos";
+#endif    
 
-    const auto ROOT_DIR = fs::path(ROOT);
+    const auto ROOT_DIR = fs::path(ROOT)/"SDL2Demo";
     const auto ASSETS_DIR = ROOT_DIR / "assets";
 
     const auto KEYBOARD_IMAGE_PATH = ASSETS_DIR / "keyboard.png";
