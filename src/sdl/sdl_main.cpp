@@ -102,21 +102,29 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    auto window_width = app_state.screen_view.width;
-    auto window_height = app_state.screen_view.height;
+    assert(app_state.screen_view.width);
+    assert(app_state.screen_view.height);
 
-    assert(window_width);
-    assert(window_height);
+    auto const screen_width = app_state.screen_view.width;
+    auto const screen_height = app_state.screen_view.height;
 
-    if (!window_width || !window_height)
+    if (!screen_width || !screen_height)
     {
         print_message("Error: app::init()");
         sdl::close();
         return EXIT_FAILURE;
     }
 
+    Vec2Du32 screen_dim{};
+    screen_dim.x = screen_width;
+    screen_dim.y = screen_height;
+
+    Vec2Du32 window_dim{};
+    window_dim.x = config::WINDOW_SCALE * screen_width;
+    window_dim.y = config::WINDOW_SCALE * screen_height;
+
     sdl::ScreenMemory screen{};
-    if(!sdl::create_screen_memory(screen, WINDOW_TITLE, window_width, window_height))
+    if(!sdl::create_screen_memory(screen, WINDOW_TITLE, screen_dim, window_dim))
     {
         print_message("Error: sdl::create_screen_memory()");
         sdl::close();
