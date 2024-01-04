@@ -224,7 +224,26 @@ namespace image
     }
 
 
-    void transform_scale_up(ImageView const& src, GrayView const& dst, u32 scale, std::function<u8(Pixel)> const& func)
+    void transform(ImageView const& src, GrayView const& dst, std::function<u8(Pixel)> const& func)
+    {
+        assert(src.matrix_data_);
+        assert(dst.matrix_data_);
+        assert(dst.width == src.width);
+        assert(dst.height == src.height);
+
+        auto const len = src.width * src.height;
+
+        auto s = src.matrix_data_;
+        auto d = dst.matrix_data_;
+
+        for (u32 i = 0; i < len; i++)
+        {
+            d[i] = func(s[i]);
+        }
+    }
+
+
+    /*void transform_scale_up(ImageView const& src, GrayView const& dst, u32 scale, std::function<u8(Pixel)> const& func)
     {
         assert(src.matrix_data_);
         assert(dst.matrix_data_);
@@ -251,7 +270,7 @@ namespace image
                 }
             }
         }
-    }
+    }*/
 }
 
 
@@ -542,15 +561,15 @@ namespace filter
     {
         auto& view = keyboard.filter;
         
-        keyboard.key_1.view = img::sub_view(view, to_rect( 42,   6,  28, 28));
-        keyboard.key_2.view = img::sub_view(view, to_rect( 78,   6,  28, 28));
-        keyboard.key_3.view = img::sub_view(view, to_rect(114,   6,  28, 28));
-        keyboard.key_4.view = img::sub_view(view, to_rect(150,   6,  28, 28));
-        keyboard.key_w.view = img::sub_view(view, to_rect( 96,  42,  28, 28));
-        keyboard.key_a.view = img::sub_view(view, to_rect( 70,  78,  28, 28));
-        keyboard.key_s.view = img::sub_view(view, to_rect(106,  78,  28, 28));
-        keyboard.key_d.view = img::sub_view(view, to_rect(142,  78,  28, 28));
-        keyboard.key_space.view = img::sub_view(view, to_rect(168, 150, 208, 28));
+        keyboard.key_1.view = img::sub_view(view, to_rect(21,  3, 14, 14));
+        keyboard.key_2.view = img::sub_view(view, to_rect(39,  3, 14, 14));
+        keyboard.key_3.view = img::sub_view(view, to_rect(57,  3, 14, 14));
+        keyboard.key_4.view = img::sub_view(view, to_rect(75,  3, 14, 14));
+        keyboard.key_w.view = img::sub_view(view, to_rect(48, 21, 14, 14));
+        keyboard.key_a.view = img::sub_view(view, to_rect(35, 39, 14, 14));
+        keyboard.key_s.view = img::sub_view(view, to_rect(53, 39, 14, 14));
+        keyboard.key_d.view = img::sub_view(view, to_rect(71, 39, 14, 14));
+        keyboard.key_space.view = img::sub_view(view, to_rect(84, 75, 104, 14));
     }
 
 
@@ -558,9 +577,9 @@ namespace filter
     {
         auto& view = mouse.filter;
 
-        mouse.btn_left.view = img::sub_view(view, to_rect(4, 4, 56, 58));
-        mouse.btn_middle.view = img::sub_view(view, to_rect(68, 4, 24, 58));
-        mouse.btn_right.view = img::sub_view(view, to_rect(100, 4, 56, 58));
+        mouse.btn_left.view   = img::sub_view(view, to_rect( 2, 2, 28, 29));
+        mouse.btn_middle.view = img::sub_view(view, to_rect(34, 2, 12, 29));
+        mouse.btn_right.view  = img::sub_view(view, to_rect(50, 2, 28, 29));
     }
 
 
@@ -568,26 +587,26 @@ namespace filter
     {
         auto& view = controller.filter;
 
-        controller.btn_dpad_up   .view = img::sub_view(view, to_rect(44,  66, 18, 32));
-        controller.btn_dpad_down .view = img::sub_view(view, to_rect(44, 120, 18, 32));
-        controller.btn_dpad_left .view = img::sub_view(view, to_rect(10, 100, 32, 18));
-        controller.btn_dpad_right.view = img::sub_view(view, to_rect(64, 100, 32, 18));
+        controller.btn_dpad_up   .view = img::sub_view(view, to_rect(22, 33,  9, 16));
+        controller.btn_dpad_down .view = img::sub_view(view, to_rect(22, 60,  9, 16));
+        controller.btn_dpad_left .view = img::sub_view(view, to_rect( 5, 50, 16,  9));
+        controller.btn_dpad_right.view = img::sub_view(view, to_rect(32, 50, 16,  9));
 
-        controller.btn_a.view = img::sub_view(view, to_rect(318, 126, 26, 26));
-        controller.btn_b.view = img::sub_view(view, to_rect(348,  96, 26, 26));
-        controller.btn_x.view = img::sub_view(view, to_rect(288,  96, 26, 26));
-        controller.btn_y.view = img::sub_view(view, to_rect(318,  66, 26, 26));
+        controller.btn_a.view = img::sub_view(view, to_rect(159, 63, 13, 13));
+        controller.btn_b.view = img::sub_view(view, to_rect(174, 48, 13, 13));
+        controller.btn_x.view = img::sub_view(view, to_rect(144, 48, 13, 13));
+        controller.btn_y.view = img::sub_view(view, to_rect(159, 33, 13, 13));
 
-        controller.btn_start.view = img::sub_view(view, to_rect(206, 48, 28, 14));
-        controller.btn_back .view = img::sub_view(view, to_rect(150, 48, 28, 14));
+        controller.btn_start.view = img::sub_view(view, to_rect(103, 24, 14, 7));
+        controller.btn_back .view = img::sub_view(view, to_rect( 75, 24, 14, 7));
 
-        controller.btn_sh_left .view = img::sub_view(view, to_rect( 36, 44, 34, 14));
-        controller.btn_sh_right.view = img::sub_view(view, to_rect(314, 44, 34, 14));
-        controller.btn_tr_left .view = img::sub_view(view, to_rect( 36, 10, 34, 26));
-        controller.btn_tr_right.view = img::sub_view(view, to_rect(314, 10, 34, 26));
+        controller.btn_sh_left .view = img::sub_view(view, to_rect( 18, 22, 17,  7));
+        controller.btn_sh_right.view = img::sub_view(view, to_rect(157, 22, 17, 7));
+        controller.btn_tr_left .view = img::sub_view(view, to_rect( 18,  5, 17, 13));
+        controller.btn_tr_right.view = img::sub_view(view, to_rect(157,  5, 17, 13));
 
-        controller.btn_st_left .view = img::sub_view(view, to_rect(120, 90, 46, 46));
-        controller.btn_st_right.view = img::sub_view(view, to_rect(218, 90, 46, 46));
+        controller.btn_st_left .view = img::sub_view(view, to_rect( 60, 45, 23, 23));
+        controller.btn_st_right.view = img::sub_view(view, to_rect(109, 45, 23, 23));
     }
 }
 
@@ -642,13 +661,13 @@ namespace app
 
 namespace
 {
-    void init_keyboard_filter(filter::KeyboardFilter& filter, Image const& raw_keyboard, u32 up_scale, Buffer8& buffer)
+    void init_keyboard_filter(filter::KeyboardFilter& filter, Image const& raw_keyboard, Buffer8& buffer)
     {
-        auto width = raw_keyboard.width * up_scale;
-        auto height = raw_keyboard.height * up_scale;
+        auto const width = raw_keyboard.width;
+        auto const height = raw_keyboard.height;
 
         filter.filter = img::make_view(width, height, buffer);
-        img::transform_scale_up(img::make_view(raw_keyboard), filter.filter, up_scale, filter::to_filter_color_id);
+        img::transform(img::make_view(raw_keyboard), filter.filter, filter::to_filter_color_id);
 
         filter::make_keyboard_filter(filter);
     }
@@ -676,13 +695,13 @@ namespace
 
 namespace
 {
-    void init_mouse_filter(filter::MouseFilter& filter, Image const& raw_mouse, u32 up_scale, Buffer8& buffer)
+    void init_mouse_filter(filter::MouseFilter& filter, Image const& raw_mouse, Buffer8& buffer)
     {
-        auto width = raw_mouse.width * up_scale;
-        auto height = raw_mouse.height * up_scale;
+        auto const width = raw_mouse.width;
+        auto const height = raw_mouse.height;
 
         filter.filter = img::make_view(width, height, buffer);
-        img::transform_scale_up(img::make_view(raw_mouse), filter.filter, up_scale, filter::to_filter_color_id);
+        img::transform(img::make_view(raw_mouse), filter.filter, filter::to_filter_color_id);
 
         filter::make_mouse_filter(filter);
     }
@@ -704,13 +723,13 @@ namespace
 
 namespace
 {
-    void init_controller_filter(filter::ControllerFilter& filter, Image const& raw_controller, u32 up_scale, Buffer8& buffer)
+    void init_controller_filter(filter::ControllerFilter& filter, Image const& raw_controller, Buffer8& buffer)
     {
-        auto width = raw_controller.width * up_scale;
-        auto height = raw_controller.height * up_scale;
+        auto const width = raw_controller.width;
+        auto const height = raw_controller.height;
 
         filter.filter = img::make_view(width, height, buffer);
-        img::transform_scale_up(img::make_view(raw_controller), filter.filter, up_scale, filter::to_filter_color_id);
+        img::transform(img::make_view(raw_controller), filter.filter, filter::to_filter_color_id);
 
         filter::make_controller_filter(filter);
     }
@@ -850,10 +869,6 @@ namespace app
         Image raw_mouse;
         Image raw_controller;
 
-        constexpr u32 keyboard_scale = 2;
-        constexpr u32 mouse_scale = 2;
-        constexpr u32 controller_scale = 2;
-
         auto const cleanup = [&]()
         {
             img::destroy_image(raw_keyboard);
@@ -882,14 +897,14 @@ namespace app
             return false;
         }
         
-        auto const keyboard_width = raw_keyboard.width * keyboard_scale;
-        auto const keyboard_height = raw_keyboard.height * keyboard_scale;
+        auto const keyboard_width = raw_keyboard.width;
+        auto const keyboard_height = raw_keyboard.height;
         
-        auto const mouse_width = raw_mouse.width * mouse_scale;
-        auto const mouse_height = raw_mouse.height * mouse_scale;
+        auto const mouse_width = raw_mouse.width;
+        auto const mouse_height = raw_mouse.height;
 
-        auto const controller_width = raw_controller.width * controller_scale;
-        auto const controller_height = raw_controller.height * controller_scale;
+        auto const controller_width = raw_controller.width;
+        auto const controller_height = raw_controller.height;
 
         u32 screen_width = std::max(keyboard_width, controller_width + mouse_width);
         u32 screen_height = keyboard_height + std::max(mouse_height, controller_height);
@@ -900,9 +915,9 @@ namespace app
         auto& mask_buffer = state_data.mask_data;
         mask_buffer = create_buffer8(screen_width * screen_height);   
 
-        init_keyboard_filter(state_data.keyboard_filter, raw_keyboard, keyboard_scale, mask_buffer);
-        init_mouse_filter(state_data.mouse_filter, raw_mouse, mouse_scale, mask_buffer);
-        init_controller_filter(state_data.controller_filter, raw_controller, controller_scale, mask_buffer);
+        init_keyboard_filter(state_data.keyboard_filter, raw_keyboard, mask_buffer);
+        init_mouse_filter(state_data.mouse_filter, raw_mouse, mask_buffer);
+        init_controller_filter(state_data.controller_filter, raw_controller, mask_buffer);
         
         auto& screen = state.screen_view;
 
