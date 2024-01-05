@@ -753,22 +753,31 @@ namespace filter
 
     static void write_to_view(AsciiFilter const& filter, StringView const& src, SubView const& dst)
     {
-        u32 dst_x = 0;
-        u32 dst_y = 0;
+        u32 const height = std::min(filter.filter.height, dst.height);
+        
+        auto dst_rect = to_rect(0, 0, 0, height);
 
-        for (u32 i = 0; i < src.length; i++)
+        for (u32 i = 0; i < src.length && dst_rect.x_end < dst.width; i++)
         {
-            auto character = filter.characters[src.data_[i] - 32];
-            auto width = character.view.width;
-            auto height = character.view.height;
-            auto dst_view = img::sub_view(dst, to_rect(dst_x, dst_y, width, height));
+            auto character = filter.characters[src.data_[i] - ' '].view;
 
-            img::transform(character.view, dst_view, filter::to_render_color);            
+            auto char_width = character.width;
 
-            dst_x += width;
+            if (dst_rect.x_end + char_width > dst.width)
+            {
+                char_width = dst.width - dst_rect.x_end;
+            }
+
+            dst_rect.x_end += char_width;
+
+            auto char_view = img::sub_view(character, to_rect(0, 0, char_width, height));
+            
+            auto dst_view = img::sub_view(dst, dst_rect);
+
+            img::transform(char_view, dst_view, filter::to_render_color);            
+
+            dst_rect.x_begin = dst_rect.x_end;
         }
-
-        //img::fill(dst, filter::BLACK);
     }
 }
 
@@ -892,7 +901,12 @@ namespace
 
         auto const mouse_width = state_data.screen_mouse.width;
         auto const mouse_height = state_data.screen_mouse.height;
-        auto coords = to_rect(mouse_width / 5, mouse_height / 2, mouse_width * 3 / 5, 30);
+
+        auto const coord_x = mouse_width / 6;
+        auto const coord_y = mouse_height / 2;
+        auto const coord_width = mouse_width * 2 / 3;
+        auto const coord_height = state_data.ascii_filter.filter.height;
+        auto coords = to_rect(coord_x, coord_y, coord_width, coord_height);
 
         state_data.screen_mouse_coords = img::sub_view(state_data.screen_mouse, coords);
     }
@@ -1011,6 +1025,7 @@ namespace
 
         img::transform(filter.filter, state.screen_mouse, filter::to_render_color);
 
+        img::fill(state.screen_mouse_coords, img::to_pixel(0, 128, 0));
         filter::write_to_view(state.ascii_filter, state.mouse_coords, state.screen_mouse_coords);
     }
 
