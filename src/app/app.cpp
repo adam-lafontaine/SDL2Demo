@@ -740,7 +740,7 @@ namespace filter
         u32 x = 0;
         for (u32 i = 0; i < ascii.count; i++)
         {
-            auto width = char_length[i * scale];
+            auto width = char_length[i] * scale;
             characters[i].view = img::sub_view(view, to_rect(x, 0, width, view.height));
             characters[i].color_id = 1; // BLACK
 
@@ -763,12 +763,12 @@ namespace filter
             auto height = character.view.height;
             auto dst_view = img::sub_view(dst, to_rect(dst_x, dst_y, width, height));
 
-            //img::transform(character.view, dst_view, filter::to_render_color);            
+            img::transform(character.view, dst_view, filter::to_render_color);            
 
             dst_x += width;
         }
 
-        img::fill(dst, filter::BLACK);
+        //img::fill(dst, filter::BLACK);
     }
 }
 
@@ -870,6 +870,8 @@ namespace
 
         filter.filter = img::make_view(width, height, buffer);
         img::transform_scale_up(img::make_view(raw_ascii), filter.filter, scale, filter::to_filter_color_id);
+
+        filter::make_ascii_filter(filter, scale);
     }
 
 
@@ -1090,7 +1092,7 @@ namespace app
         auto const controller_width = raw_controller.width;
         auto const controller_height = raw_controller.height;
 
-        constexpr u32 ASCII_SCALE = 2;
+        constexpr u32 ASCII_SCALE = 1;
 
         auto const ascii_width = raw_ascii.width * ASCII_SCALE;
         auto const ascii_height = raw_ascii.height * ASCII_SCALE;
