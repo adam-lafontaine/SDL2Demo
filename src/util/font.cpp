@@ -1,4 +1,7 @@
-namespace
+#include "types.hpp"
+
+
+namespace font
 {
     constexpr auto N_CHARS = 127 - ' ';
 
@@ -12,4 +15,6 @@ namespace
         
         
     };
+
+
 }

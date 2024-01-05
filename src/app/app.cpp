@@ -61,6 +61,18 @@ namespace
 		mb::create_buffer(buffer, n_pixels);
 		return buffer;
 	}
+
+    
+    static Rect2Du32 to_rect(u16 x, u16 y, u16 width, u16 height)
+    {
+        Rect2Du32 range{};
+        range.x_begin = x;
+        range.x_end = x + width;
+        range.y_begin = y;
+        range.y_end = y + height;
+
+        return range;
+    }
 }
 
 
@@ -166,6 +178,26 @@ namespace image
 
         return sub_view;
     }
+
+
+    template <typename T>
+    static MatrixSubView2D<T> sub_view(MatrixSubView2D<T> const& view, Rect2Du32 const& range)
+    {
+        MatrixSubView2D<T> sub_view{};
+
+        sub_view.matrix_data_ = view.matrix_data_;
+        sub_view.matrix_width = view.width;
+
+        sub_view.x_begin = range.x_begin + view.x_begin;
+		sub_view.x_end = range.x_end + view.x_begin;
+		sub_view.y_begin = range.y_begin + view.y_begin;
+		sub_view.y_end = range.y_end + view.y_begin;
+
+		sub_view.width = range.x_end - range.x_begin;
+		sub_view.height = range.y_end - range.y_begin;
+
+        return sub_view;
+    }
 }
 
 
@@ -243,7 +275,7 @@ namespace image
     }
 
 
-    /*void transform_scale_up(ImageView const& src, GrayView const& dst, u32 scale, std::function<u8(Pixel)> const& func)
+    void transform_scale_up(ImageView const& src, GrayView const& dst, u32 scale, std::function<u8(Pixel)> const& func)
     {
         assert(src.matrix_data_);
         assert(dst.matrix_data_);
@@ -255,7 +287,7 @@ namespace image
             auto src_row = row_begin(src, src_y);
             for (u32 src_x = 0; src_x < src.width; src_x++)
             {
-                auto const s = src_row[src_x];
+                auto const value = func(src_row[src_x]);
 
                 auto dst_y = src_y * scale;
                 for (u32 offset_y = 0; offset_y < scale; offset_y++, dst_y++)
@@ -265,12 +297,12 @@ namespace image
                     auto dst_x = src_x * scale;
                     for (u32 offset_x = 0; offset_x < scale; offset_x++, dst_x++)
                     {
-                        dst_row[dst_x] = func(s);
+                        dst_row[dst_x] = value;
                     }
                 }
             }
         }
-    }*/
+    }
 }
 
 
@@ -347,6 +379,7 @@ namespace
     const auto KEYBOARD_IMAGE_PATH = ASSETS_DIR / "keyboard.png";
     const auto MOUSE_IMAGE_PATH = ASSETS_DIR / "mouse.png";
     const auto CONTROLLER_IMAGE_PATH = ASSETS_DIR / "controller.png";
+    const auto ASCII_IMAGE_PATH = ASSETS_DIR / "ascii.png";
 
 
     bool load_keyboard_image(Image& image)
@@ -380,11 +413,16 @@ namespace
 
         return true;
     }
+    
 
-
-    bool has_color(Pixel p)
+    bool load_ascii_image(Image& image)
     {
-        return p.alpha > 0 && (p.red > 0 || p.green > 0 || p.blue > 0);
+        if (!img::read_image_from_file(ASCII_IMAGE_PATH.string().c_str(), image))
+        {
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -404,7 +442,7 @@ namespace filter
     {
         TRANSPARENT,
         BLACK,
-        WHITE,        
+        WHITE,      
         BTN_BLUE,
         BTN_RED
     };
@@ -544,17 +582,15 @@ namespace filter
     };
 
 
-    
-    static Rect2Du32 to_rect(u16 x, u16 y, u16 width, u16 height)
+    class AsciiFilter
     {
-        Rect2Du32 range{};
-        range.x_begin = x;
-        range.x_end = x + width;
-        range.y_begin = y;
-        range.y_end = y + height;
+    public:
+        GrayView filter;
 
-        return range;
-    }
+        static constexpr u32 count = 95;
+
+        SubFilter characters[count];
+    };
 
 
     static void make_keyboard_filter(KeyboardFilter& keyboard)
@@ -608,6 +644,29 @@ namespace filter
         controller.btn_st_left .view = img::sub_view(view, to_rect( 60, 45, 23, 23));
         controller.btn_st_right.view = img::sub_view(view, to_rect(109, 45, 23, 23));
     }
+
+
+    static void make_ascii_filter(AsciiFilter& ascii, u32 scale)
+    {
+        auto& view = ascii.filter;
+        auto& characters = ascii.characters;
+
+        u32 char_length[ascii.count] = { 2, 4, 4, 6, 6, 5, 6, 5, 5, 5, 5, 5, 4, 5, 4, 5, 5, 4, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 5, 4, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6, 5, 6, 6, 5, 6, 5, 3, 5, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6, 5, 6, 6, 5, 6, 5, 4, 4, 4, 5 };
+
+        constexpr auto char_length_count = sizeof(char_length) / sizeof(u32);
+        static_assert(char_length_count == ascii.count);
+
+        auto const value_at = [&view](u32 x, u32 y){ return *(row_begin(view, y) + x); };
+
+        u32 x = 0;
+        for (u32 i = 0; i < ascii.count; i++)
+        {
+            auto width = char_length[i * scale];
+            characters[i].view = img::sub_view(view, to_rect(x, 0, width, view.height));
+            characters[i].color_id = 1; // BLACK
+            x += width;
+        }
+    }
 }
 
 
@@ -622,13 +681,16 @@ namespace app
         filter::KeyboardFilter keyboard_filter;        
         filter::MouseFilter mouse_filter;
         filter::ControllerFilter controller_filter;
+        filter::AsciiFilter ascii_filter;
 
         b32 is_init;
         SubView screen_keyboard;
         SubView screen_mouse;
         SubView screen_controller;
+        SubView screen_mouse_coords;
+
         
-        MemoryBuffer<u8> mask_data;
+        MemoryBuffer<u8> filter_data;
     };
 
 
@@ -650,7 +712,7 @@ namespace app
     {
         auto& state_data = *state.data_;
         
-        mb::destroy_buffer(state_data.mask_data);
+        mb::destroy_buffer(state_data.filter_data);
 
         std::free(state.data_);
     }
@@ -772,6 +834,21 @@ namespace
 }
 
 
+/* ascii */
+
+namespace
+{
+    void init_ascii_filter(filter::AsciiFilter& filter, Image const& raw_ascii, u32 scale, Buffer8& buffer)
+    {
+        auto const width = raw_ascii.width * scale;
+        auto const height = raw_ascii.height * scale;
+
+        filter.filter = img::make_view(width, height, buffer);
+        img::transform_scale_up(img::make_view(raw_ascii), filter.filter, scale, filter::to_filter_color_id);
+    }
+}
+
+
 /* render */
 
 namespace
@@ -799,6 +876,8 @@ namespace
         {
             img::fill_if(buttons[i].view, buttons[i].color_id, filter::can_set_color_id);
         }
+
+        // mouse coords
 
         img::transform(filter.filter, state.screen_mouse, filter::to_render_color);
     }
@@ -828,27 +907,21 @@ namespace
         auto& state_data = *state.data_;
         auto& screen = state.screen_view;
 
-        Rect2Du32 keyboard{};
-        keyboard.x_begin = 0;
-        keyboard.x_end = keyboard.x_begin + state_data.keyboard_filter.filter.width;
-        keyboard.y_begin = 0;
-        keyboard.y_end = keyboard.y_begin + state_data.keyboard_filter.filter.height;
+        auto keyboard = to_rect(0, 0, state_data.keyboard_filter.filter.width, state_data.keyboard_filter.filter.height);
 
-        Rect2Du32 controller{};
-        controller.x_begin = 0;
-        controller.x_end = controller.x_begin + state_data.controller_filter.filter.width;
-        controller.y_begin = keyboard.y_end;
-        controller.y_end = controller.y_begin + state_data.controller_filter.filter.height;
-
-        Rect2Du32 mouse{};
-        mouse.x_begin = controller.x_end;
-        mouse.x_end = mouse.x_begin + state_data.mouse_filter.filter.width;
-        mouse.y_begin = controller.y_begin;
-        mouse.y_end = mouse.y_begin + state_data.mouse_filter.filter.height;
-
+        auto controller = to_rect(0, keyboard.y_end, state_data.controller_filter.filter.width, state_data.controller_filter.filter.height);
+        
+        auto mouse = to_rect(controller.x_end, controller.y_begin, state_data.mouse_filter.filter.width, state_data.mouse_filter.filter.height);
+        
         state_data.screen_keyboard = img::sub_view(screen, keyboard);
         state_data.screen_mouse = img::sub_view(screen, mouse);
-        state_data.screen_controller = img::sub_view(screen, controller);
+        state_data.screen_controller = img::sub_view(screen, controller);        
+
+        auto const mouse_width = state_data.screen_mouse.width;
+        auto const mouse_height = state_data.screen_mouse.height;
+        auto coords = to_rect(mouse_width / 4, mouse_height / 2, mouse_width / 2, 20);
+
+        state_data.screen_mouse_coords = img::sub_view(state_data.screen_mouse, coords);
     }
 }
 
@@ -868,12 +941,14 @@ namespace app
         Image raw_keyboard;
         Image raw_mouse;
         Image raw_controller;
+        Image raw_ascii;
 
         auto const cleanup = [&]()
         {
             img::destroy_image(raw_keyboard);
             img::destroy_image(raw_mouse);
             img::destroy_image(raw_controller);
+            img::destroy_image(raw_ascii);
         };
 
         if (!load_keyboard_image(raw_keyboard))
@@ -896,6 +971,13 @@ namespace app
             cleanup();
             return false;
         }
+
+        if (!load_ascii_image(raw_ascii))
+        {
+            printf("Error: load_ascii_image()\n");
+            cleanup();
+            return false;
+        }
         
         auto const keyboard_width = raw_keyboard.width;
         auto const keyboard_height = raw_keyboard.height;
@@ -906,18 +988,26 @@ namespace app
         auto const controller_width = raw_controller.width;
         auto const controller_height = raw_controller.height;
 
+        constexpr u32 ASCII_SCALE = 2;
+
+        auto const ascii_width = raw_ascii.width * ASCII_SCALE;
+        auto const ascii_height = raw_ascii.height * ASCII_SCALE;
+
         u32 screen_width = std::max(keyboard_width, controller_width + mouse_width);
         u32 screen_height = keyboard_height + std::max(mouse_height, controller_height);
 
         auto& state_data = *state.data_;
         state_data.is_init = false;
 
-        auto& mask_buffer = state_data.mask_data;
-        mask_buffer = create_buffer8(screen_width * screen_height);   
+        auto const filter_bytes = screen_width * screen_height + ascii_width * ascii_height;
 
-        init_keyboard_filter(state_data.keyboard_filter, raw_keyboard, mask_buffer);
-        init_mouse_filter(state_data.mouse_filter, raw_mouse, mask_buffer);
-        init_controller_filter(state_data.controller_filter, raw_controller, mask_buffer);
+        auto& filter_buffer = state_data.filter_data;
+        filter_buffer = create_buffer8(filter_bytes);   
+
+        init_keyboard_filter(state_data.keyboard_filter, raw_keyboard, filter_buffer);
+        init_mouse_filter(state_data.mouse_filter, raw_mouse, filter_buffer);
+        init_controller_filter(state_data.controller_filter, raw_controller, filter_buffer);
+        init_ascii_filter(state_data.ascii_filter, raw_ascii, ASCII_SCALE, filter_buffer);
         
         auto& screen = state.screen_view;
 
