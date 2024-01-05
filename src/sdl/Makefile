@@ -118,6 +118,7 @@ object_files += $(app_o)
 app_dep := $(app_h)
 app_dep += $(memory_buffer_h)
 app_dep += $(stb_image_h)
+app_dep += $(qsprintf_h)
 
 #************
 
