@@ -35,11 +35,11 @@ namespace sdl
 
 #ifdef SDL2_WASM
 
-    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO;
+    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO | SDL_INIT_AUDIO;
 
 #else
     
-    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC;
+    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC;
 
 #endif
 

@@ -1,6 +1,7 @@
 #include "sdl_include.hpp"
 #include "../util/stopwatch.hpp"
 #include "../app/app.hpp"
+#include "../util/ring_buffer.hpp"
 
 #ifndef NDEBUG
 
@@ -150,10 +151,10 @@ int main(int argc, char *argv[])
     b32 frame_prev = 1;
 
     Stopwatch sw;
-    f64 frame_nano = TARGET_NS_PER_FRAME;
-    f64 ns_elapsed = 0.0;
+    f64 frame_nano = TARGET_NS_PER_FRAME;    
 
 #ifndef NDEBUG
+f64 ns_elapsed = 0.0;
     constexpr f64 title_refresh_ns = NANO * 0.25;
     constexpr int TITLE_LEN = 50;
     char dbg_title[TITLE_LEN] = { 0 };
@@ -211,11 +212,10 @@ int main(int argc, char *argv[])
             }        
         }
 
-        ns_elapsed += frame_nano;
-
         sw.start();
 
 #ifndef NDEBUG
+        ns_elapsed += frame_nano;
         if(ns_elapsed >= title_refresh_ns)
         {
             auto fps = (int)(NANO / frame_nano + 0.5);
