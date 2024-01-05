@@ -1025,7 +1025,7 @@ namespace
 
         img::transform(filter.filter, state.screen_mouse, filter::to_render_color);
 
-        img::fill(state.screen_mouse_coords, img::to_pixel(0, 128, 0));
+        //img::fill(state.screen_mouse_coords, img::to_pixel(0, 128, 0));
         filter::write_to_view(state.ascii_filter, state.mouse_coords, state.screen_mouse_coords);
     }
 
