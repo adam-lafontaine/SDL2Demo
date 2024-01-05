@@ -30,17 +30,16 @@ static void print_message(const char* msg)
 
 namespace sdl
 {
-    constexpr u32 SCREEN_BYTES_PER_PIXEL = sizeof(Pixel);
-
+    constexpr auto SCREEN_BYTES_PER_PIXEL = sizeof(Pixel);
     constexpr auto MAX_CONTROLLERS = input::MAX_CONTROLLERS;
 
-#ifndef SDL2_WASM
-
-    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC;
-
-#else
+#ifdef SDL2_WASM
 
     constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO;
+
+#else
+    
+    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC;
 
 #endif
 
@@ -294,60 +293,140 @@ namespace sdl
     }
 
 
+    namespace screen
+    {
+        static bool create_window(ScreenMemory& screen, cstr title, u32 width, u32 height)
+        {
+            screen.window = SDL_CreateWindow(
+                title,
+                SDL_WINDOWPOS_UNDEFINED,
+                SDL_WINDOWPOS_UNDEFINED,
+                (int)width,
+                (int)height,
+                SDL_WINDOW_RESIZABLE);
+
+            if(!screen.window)
+            {
+                display_error("SDL_CreateWindow failed");
+                return false;
+            }
+
+            set_window_icon(screen.window);
+
+            return true;
+        }
+
+
+        static bool create_renderer(ScreenMemory& screen)
+        {
+            screen.renderer = SDL_CreateRenderer(screen.window, -1, 0);
+
+            if(!screen.renderer)
+            {
+                display_error("SDL_CreateRenderer failed");
+                return false;
+            }
+
+            return true;
+        }
+
+
+        static bool create_texture(ScreenMemory& screen, u32 width, u32 height)
+        {
+            screen.texture =  SDL_CreateTexture(
+                screen.renderer,
+                SDL_PIXELFORMAT_ABGR8888,
+                SDL_TEXTUREACCESS_STREAMING,
+                width,
+                height);
+            
+            if(!screen.texture)
+            {
+                display_error("SDL_CreateTexture failed");
+                return false;
+            }
+
+            return true;
+        }
+
+
+        static bool create_image(ScreenMemory& screen, u32 width, u32 height)
+        {
+            screen.image.data_ = (Pixel*)malloc((size_t)(sizeof(Pixel) * width * height));
+
+            if(!screen.image.data_)
+            {
+                display_error("Allocating image memory failed");
+                return false;
+            }
+
+            screen.image.width = width;
+            screen.image.height = height;
+
+            return true;
+        }
+    }
+
+
     static bool create_screen_memory(ScreenMemory& screen, cstr title, u32 width, u32 height)
     {
         destroy_screen_memory(screen);
 
-        screen.window = SDL_CreateWindow(
-            title,
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOWPOS_UNDEFINED,
-            (int)width,
-            (int)height,
-            SDL_WINDOW_RESIZABLE);
-
-        if(!screen.window)
+        if (!screen::create_window(screen, title, width, height))
         {
-            display_error("SDL_CreateWindow failed");
-            return false;
-        }
-
-        set_window_icon(screen.window);
-
-        screen.renderer = SDL_CreateRenderer(screen.window, -1, 0);
-
-        if(!screen.renderer)
-        {
-            display_error("SDL_CreateRenderer failed");
             destroy_screen_memory(screen);
             return false;
         }
-
-        screen.texture =  SDL_CreateTexture(
-            screen.renderer,
-            SDL_PIXELFORMAT_ABGR8888,
-            SDL_TEXTUREACCESS_STREAMING,
-            width,
-            height);
         
-        if(!screen.texture)
+        if (!screen::create_renderer(screen))
         {
-            display_error("SDL_CreateTexture failed");
             destroy_screen_memory(screen);
             return false;
         }
 
-        screen.image.data_ = (Pixel*)malloc((size_t)(SCREEN_BYTES_PER_PIXEL * width * height));
-
-        if(!screen.image.data_)
+        if (!screen::create_texture(screen, width, height))
         {
-            display_error("Allocating image memory failed");
             destroy_screen_memory(screen);
             return false;
         }
 
-        screen.image.width = width;
-        screen.image.height = height;
+        if (!screen::create_image(screen, width, height))
+        {
+            destroy_screen_memory(screen);
+            return false;
+        }
+
+        return true;
+    }
+
+
+    static bool create_screen_memory(ScreenMemory& screen, cstr title, Vec2Du32 screen_dim, Vec2Du32 window_dim)
+    {
+        destroy_screen_memory(screen);
+
+        if (!screen::create_window(screen, title, window_dim.x, window_dim.y))
+        {
+            destroy_screen_memory(screen);
+            return false;
+        }
+        
+        if (!screen::create_renderer(screen))
+        {
+            destroy_screen_memory(screen);
+            return false;
+        }
+
+        if (!screen::create_texture(screen, screen_dim.x, screen_dim.y))
+        {
+            destroy_screen_memory(screen);
+            return false;
+        }
+
+        if (!screen::create_image(screen, screen_dim.x, screen_dim.y))
+        {
+            destroy_screen_memory(screen);
+            return false;
+        }
 
         return true;
     }

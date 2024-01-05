@@ -29,6 +29,8 @@ namespace config
 {
     constexpr auto APP_TITLE = "SDL2 Demo";
 
+    constexpr u32 WINDOW_SCALE = 2;
+
 
 #ifdef _WIN32
     constexpr auto ROOT = "C:/D_Data/Repos";
