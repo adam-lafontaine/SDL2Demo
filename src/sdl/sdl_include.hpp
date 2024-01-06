@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../input/input.hpp"
+#include "../output/output.hpp"
 
 
 #if defined(_WIN32)
@@ -30,7 +31,7 @@ static void print_message(const char* msg)
 
 namespace sdl
 {
-    constexpr auto SCREEN_BYTES_PER_PIXEL = sizeof(Pixel);
+    constexpr auto SCREEN_BYTES_PER_PIXEL = sizeof(image::Pixel);
     constexpr auto MAX_CONTROLLERS = input::MAX_CONTROLLERS;
 
 #ifdef SDL2_WASM
@@ -265,7 +266,7 @@ namespace sdl
         SDL_Renderer* renderer = nullptr;
         SDL_Texture* texture = nullptr;
 
-        Image image;
+        image::Image image;
     };
 
 
@@ -352,7 +353,7 @@ namespace sdl
 
         static bool create_image(ScreenMemory& screen, u32 width, u32 height)
         {
-            screen.image.data_ = (Pixel*)malloc((size_t)(sizeof(Pixel) * width * height));
+            screen.image.data_ = (image::Pixel*)malloc((size_t)(sizeof(image::Pixel) * width * height));
 
             if(!screen.image.data_)
             {

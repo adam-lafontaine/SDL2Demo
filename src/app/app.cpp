@@ -1,10 +1,8 @@
 #include "app.hpp"
-#include "../util/memory_buffer.hpp"
-#include "../util/stb_image/stb_image.h"
+#include "../output/image.hpp"
 #include "../util/qsprintf/qsprintf.hpp"
 
 #include <filesystem>
-#include <functional>
 #include <array>
 #include <cassert>
 #include <cstring>
@@ -16,66 +14,33 @@
 #define printf(fmt, ...)
 #endif
 
-namespace mb = memory_buffer;
+namespace img = image;
+namespace fs = std::filesystem;
+
+using Buffer8 = img::Buffer8;
+using Image = img::Image;
+using Pixel = img::Pixel;
+using GrayView = img::GrayView;
+using GraySubView = img::GraySubView;
+using SubView = img::SubView;
 
 
-/* types */
-
-namespace
+static Rect2Du32 to_rect(u16 x, u16 y, u32 width, u32 height)
 {
-    template <typename T>
-    class MatrixSubView2D
-    {
-    public:
-        T*  matrix_data_;
-        u32 matrix_width;
+    Rect2Du32 range{};
+    range.x_begin = x;
+    range.x_end = x + width;
+    range.y_begin = y;
+    range.y_end = y + height;
 
-        u32 width;
-        u32 height;
-
-        union
-        {
-            Rect2Du32 range;
-
-            struct
-            {
-                u32 x_begin;
-                u32 x_end;
-                u32 y_begin;
-                u32 y_end;
-            };
-        };
-    };
+    return range;
+}
 
 
-    using SubView = MatrixSubView2D<Pixel>;    
-    using GraySubView = MatrixSubView2D<u8>;
-    using ImageGray = Matrix2D<u8>;
-    using GrayView = MatrixView2D<u8>;
-    using Buffer8 = MemoryBuffer<u8>;
- 
+/* string_view */
 
-
-    inline Buffer8 create_buffer8(u32 n_pixels)
-	{
-		Buffer8 buffer;
-		mb::create_buffer(buffer, n_pixels);
-		return buffer;
-	}
-
-    
-    static Rect2Du32 to_rect(u16 x, u16 y, u32 width, u32 height)
-    {
-        Rect2Du32 range{};
-        range.x_begin = x;
-        range.x_end = x + width;
-        range.y_begin = y;
-        range.y_end = y + height;
-
-        return range;
-    }
-
-
+namespace sv
+{
     class StringView
     {
     public:
@@ -83,339 +48,8 @@ namespace
         u32 capacity;
         u32 length;
     };
-    
-}
 
 
-/* row_begin */
-
-namespace
-{
-    template <typename T>
-	static inline T* row_begin(MatrixView2D<T> const& view, u32 y)
-	{
-		return view.matrix_data_ + (u64)(y * view.width);
-	}
-
-
-    template <typename T>
-    static inline T* row_begin(MatrixSubView2D<T> const& view, u32 y)
-    {
-        return view.matrix_data_ + (u64)((view.y_begin + y) * view.matrix_width + view.x_begin);
-    }
-}
-
-
-namespace image
-{
-    constexpr inline Pixel to_pixel(u8 red, u8 green, u8 blue, u8 alpha)
-    {
-        Pixel p{};
-        p.red = red;
-        p.green = green;
-        p.blue = blue;
-        p.alpha = alpha;
-
-        return p;
-    }
-
-
-    constexpr inline Pixel to_pixel(u8 red, u8 green, u8 blue)
-    {
-        return to_pixel(red, green, blue, 255);
-    }
-
-    
-    void destroy_image(Image& image)
-    {
-        if (image.data_)
-		{
-			std::free((void*)image.data_);
-			image.data_ = nullptr;
-		}
-
-		image.width = 0;
-		image.height = 0;
-    }
-}
-
-
-/* make_view */
-
-namespace image
-{
-    ImageView make_view(Image const& image)
-    {
-        ImageView view{};
-
-        view.width = image.width;
-        view.height = image.height;
-        view.matrix_data_ = image.data_;
-
-        return view;
-    }
-
-
-    GrayView make_view(u32 width, u32 height, Buffer8& buffer)
-    {
-        GrayView view{};
-
-        view.matrix_data_ = mb::push_elements(buffer, width * height);
-        if (view.matrix_data_)
-        {
-            view.width = width;
-            view.height = height;
-        }
-
-        return view;
-    }
-}
-
-
-/* sub_view */
-
-namespace image
-{
-    template <typename T>
-    static MatrixSubView2D<T> sub_view(MatrixView2D<T> const& view, Rect2Du32 const& range)
-    {
-        MatrixSubView2D<T> sub_view{};
-
-        sub_view.matrix_data_ = view.matrix_data_;
-        sub_view.matrix_width = view.width;
-        sub_view.range = range;
-        sub_view.width = range.x_end - range.x_begin;
-        sub_view.height = range.y_end - range.y_begin;
-
-        return sub_view;
-    }
-
-
-    template <typename T>
-    static MatrixSubView2D<T> sub_view(MatrixSubView2D<T> const& view, Rect2Du32 const& range)
-    {
-        MatrixSubView2D<T> sub_view{};
-
-        sub_view.matrix_data_ = view.matrix_data_;
-        sub_view.matrix_width = view.matrix_width;
-
-        sub_view.x_begin = range.x_begin + view.x_begin;
-		sub_view.x_end = range.x_end + view.x_begin;
-		sub_view.y_begin = range.y_begin + view.y_begin;
-		sub_view.y_end = range.y_end + view.y_begin;
-
-		sub_view.width = range.x_end - range.x_begin;
-		sub_view.height = range.y_end - range.y_begin;
-
-        return sub_view;
-    }
-}
-
-
-/* fill */
-
-namespace image
-{
-    template <typename T>
-	static inline void fill_span(T* dst, T value, u32 len)
-	{
-		for (u32 i = 0; i < len; ++i)
-		{
-			dst[i] = value;
-		}
-	}
-
-
-    void fill(ImageView const& view, Pixel color)
-    {
-        fill_span(view.matrix_data_, color, view.width * view.height);
-    }
-
-
-    void fill(SubView const& view, Pixel color)
-    {
-        for (u32 y = 0; y < view.height; y++)
-        {
-            fill_span(row_begin(view, y), color, view.width);
-        }
-    }
-
-
-    void fill_if(GraySubView const& view, u8 gray, std::function<bool(u8)> const& pred)
-    {
-        for (u32 y = 0; y < view.height; y++)
-        {
-            auto row = row_begin(view, y);
-            for (u32 x = 0; x < view.width; x++)
-            {
-                if (pred(row[x]))
-                {
-                    row[x] = gray;
-                }
-            }
-        }
-    }
-}
-
-
-/* transform */
-
-namespace image
-{
-    void transform(GrayView const& src, SubView const& dst, std::function<Pixel(u8, Pixel)> const& func)
-    {
-        assert(src.matrix_data_);
-        assert(dst.matrix_data_);
-        assert(dst.width == src.width);
-        assert(dst.height == src.height);
-
-        for (u32 y = 0; y < src.height; y++)
-        {
-            auto s = row_begin(src, y);
-            auto d = row_begin(dst, y);
-            for (u32 x = 0; x < src.width; x++)
-            {
-                d[x] = func(s[x], d[x]);
-            }
-        }
-    }
-
-
-    void transform(GraySubView const& src, SubView const& dst, std::function<Pixel(u8, Pixel)> const& func)
-    {
-        assert(src.matrix_data_);
-        assert(dst.matrix_data_);
-        assert(dst.width == src.width);
-        assert(dst.height == src.height);
-
-        for (u32 y = 0; y < src.height; y++)
-        {
-            auto s = row_begin(src, y);
-            auto d = row_begin(dst, y);
-            for (u32 x = 0; x < src.width; x++)
-            {
-                d[x] = func(s[x], d[x]);
-            }
-        }
-    }
-
-
-    void transform(ImageView const& src, GrayView const& dst, std::function<u8(Pixel)> const& func)
-    {
-        assert(src.matrix_data_);
-        assert(dst.matrix_data_);
-        assert(dst.width == src.width);
-        assert(dst.height == src.height);
-
-        auto const len = src.width * src.height;
-
-        auto s = src.matrix_data_;
-        auto d = dst.matrix_data_;
-
-        for (u32 i = 0; i < len; i++)
-        {
-            d[i] = func(s[i]);
-        }
-    }
-
-
-    void transform_scale_up(ImageView const& src, GrayView const& dst, u32 scale, std::function<u8(Pixel)> const& func)
-    {
-        assert(src.matrix_data_);
-        assert(dst.matrix_data_);
-        assert(dst.width == src.width * scale);
-        assert(dst.height == src.height * scale);
-
-        for (u32 src_y = 0; src_y < src.height; src_y++)
-        {
-            auto src_row = row_begin(src, src_y);
-            for (u32 src_x = 0; src_x < src.width; src_x++)
-            {
-                auto const value = func(src_row[src_x]);
-
-                auto dst_y = src_y * scale;
-                for (u32 offset_y = 0; offset_y < scale; offset_y++, dst_y++)
-                {
-                    auto dst_row = row_begin(dst, dst_y);
-
-                    auto dst_x = src_x * scale;
-                    for (u32 offset_x = 0; offset_x < scale; offset_x++, dst_x++)
-                    {
-                        dst_row[dst_x] = value;
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-/* read */
-
-namespace image
-{
-    static bool has_extension(const char* filename, const char* ext)
-    {
-        size_t file_length = std::strlen(filename);
-        size_t ext_length = std::strlen(ext);
-
-        return !std::strcmp(&filename[file_length - ext_length], ext);
-    }
-
-
-    static bool is_valid_image_file(const char* filename)
-    {
-        return 
-            has_extension(filename, ".bmp") || 
-            has_extension(filename, ".BMP") ||
-            has_extension(filename, ".png")||
-            has_extension(filename, ".PNG");
-    }
-
-
-    bool read_image_from_file(const char* img_path_src, Image& image_dst)
-	{
-        auto is_valid_file = is_valid_image_file(img_path_src);
-        assert(is_valid_file && "invalid image file");
-
-        if (!is_valid_file)
-        {
-            return false;
-        }
-
-		int width = 0;
-		int height = 0;
-		int image_channels = 0;
-		int desired_channels = 4;
-
-		auto data = (Pixel*)stbi_load(img_path_src, &width, &height, &image_channels, desired_channels);
-
-		assert(data && "stbi_load() - no image data");
-		assert(width && "stbi_load() - no image width");
-		assert(height && "stbi_load() - no image height");
-
-		if (!data)
-		{
-			return false;
-		}
-
-		image_dst.data_ = data;
-		image_dst.width = width;
-		image_dst.height = height;
-
-		return true;
-	}
-}
-
-
-namespace img = image;
-namespace fs = std::filesystem;
-
-
-/* string_view */
-
-namespace sv
-{
     static void zero_view(StringView& view)
     {
         view.length = 0;
@@ -450,8 +84,6 @@ namespace sv
 
 namespace
 {
-    
-
     const auto ROOT_DIR = fs::path(config::ROOT)/"SDL2Demo";
     const auto ASSETS_DIR = ROOT_DIR / "assets";
 
@@ -735,8 +367,6 @@ namespace filter
         constexpr auto char_length_count = sizeof(char_length) / sizeof(u32);
         static_assert(char_length_count == ascii.count);
 
-        auto const value_at = [&view](u32 x, u32 y){ return *(row_begin(view, y) + x); };
-
         u32 x = 0;
         for (u32 i = 0; i < ascii.count; i++)
         {
@@ -751,7 +381,7 @@ namespace filter
     }
 
 
-    static void write_to_view(AsciiFilter const& filter, StringView const& src, SubView const& dst)
+    static void write_to_view(AsciiFilter const& filter, sv::StringView const& src, SubView const& dst)
     {
         u32 const height = std::min(filter.filter.height, dst.height);
         
@@ -795,7 +425,7 @@ namespace app
         filter::ControllerFilter controller_filter;
         filter::AsciiFilter ascii_filter;
 
-        StringView mouse_coords;
+        sv::StringView mouse_coords;
         
         SubView screen_keyboard;
         SubView screen_mouse;
@@ -982,7 +612,7 @@ namespace
     }
 
 
-    void update_mouse_coords(StringView& coords, input::Input const& input)
+    void update_mouse_coords(sv::StringView& coords, input::Input const& input)
     {
         auto mouse_pos = input.mouse.window_pos;
 
@@ -990,7 +620,7 @@ namespace
 
         qsnprintf(coords.data_, coords.capacity, "(%d, %d)", mouse_pos.x, mouse_pos.y);
 
-        coords.length = strlen(coords.data_);
+        coords.length = std::strlen(coords.data_);
     }
 
 
@@ -1136,7 +766,7 @@ namespace app
         auto const buffer_bytes = screen_width * screen_height + ascii_width * ascii_height + mouse_coord_capacity;
 
         auto& u8_buffer = state_data.u8_data;
-        u8_buffer = create_buffer8(buffer_bytes);   
+        u8_buffer = img::create_buffer8(buffer_bytes);   
 
         init_keyboard_filter(state_data.keyboard_filter, raw_keyboard, u8_buffer);
         init_mouse_filter(state_data.mouse_filter, raw_mouse, u8_buffer);

@@ -9,14 +9,14 @@ NO_FLAGS :=
 
 ALL_LFLAGS := $(SDL2)
 
-root  := ../..
-build := $(root)/build/sdl
-src   := $(root)/src
-util  := $(src)/util
-input := $(src)/input
-sdl   := $(src)/sdl
-image := $(src)/image
-app   := $(src)/app
+root   := ../..
+build  := $(root)/build/sdl
+src    := $(root)/src
+util   := $(src)/util
+input  := $(src)/input
+output := $(src)/output
+sdl    := $(src)/sdl
+app    := $(src)/app
 
 exe := sdl_app
 
@@ -55,10 +55,28 @@ input_state_h += $(input_h)
 #**************
 
 
+#*** output ***
+
+output_h := $(output)/output.hpp
+output_h += $(types_h)
+
+#***********
+
+
+#*** image ***
+
+image_h := $(output)/image.hpp
+image_h += $(output_h)
+image_h += $(memory_buffer_h)
+
+#**************
+
+
 #*** sdl ***
 
 sdl_include_h := $(sdl)/sdl_include.hpp
 sdl_include_h += $(input_h)
+sdl_include_h += $(output_h)
 
 #**********
 
@@ -67,6 +85,7 @@ sdl_include_h += $(input_h)
 
 app_h := $(app)/app.hpp
 app_h += $(input_h)
+app_h += $(output_h)
 
 #************
 
@@ -82,6 +101,18 @@ main_dep += $(stopwatch_h)
 main_dep += $(app_h)
 
 #************
+
+
+#*** image cpp ***
+
+image_c := $(output)/image.cpp
+image_o := $(build)/image.o
+object_files += $(image_o)
+
+image_dep := $(image_h)
+image_dep += $(stb_image_h)
+
+#*************
 
 
 #*** sdl cpp ***
@@ -116,8 +147,7 @@ app_o        := $(build)/app.o
 object_files += $(app_o)
 
 app_dep := $(app_h)
-app_dep += $(memory_buffer_h)
-app_dep += $(stb_image_h)
+app_dep += $(image_h)
 app_dep += $(qsprintf_h)
 
 #************
@@ -126,6 +156,11 @@ app_dep += $(qsprintf_h)
 $(main_o): $(main_c) $(main_dep)
 	@echo "\n  main"
 	$(GPP) -o $@ -c $< $(SDL2)
+
+
+$(image_o): $(image_c) $(image_dep)
+	@echo "\n  image"
+	$(GPP) -o $@ -c $< $(NO_FLAGS)
 
 
 $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)

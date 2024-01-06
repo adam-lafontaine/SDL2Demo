@@ -1,9 +1,14 @@
 #pragma once
 
 #include "../input/input.hpp"
+#include "../output/output.hpp"
+
 
 namespace app
 {
+    using ImageView = image::ImageView;
+
+
     class StateData;
 
 

@@ -62,16 +62,6 @@ public:
 };
 
 
-class RGBAu8
-{
-public:
-	u8 red;
-	u8 green;
-	u8 blue;
-	u8 alpha;
-};
-
-
 template <typename T>
 class DataResult
 {
@@ -99,7 +89,3 @@ using Rect2Di32 = Rect2D<i32>;
 using Rect2Df32 = Rect2D<f32>;
 using Rect2Du32 = Rect2D<u32>;
 using Rect2Df64 = Rect2D<f64>;
-
-using Pixel = RGBAu8;
-using Image = Matrix2D<Pixel>;
-using ImageView = MatrixView2D<Pixel>;
