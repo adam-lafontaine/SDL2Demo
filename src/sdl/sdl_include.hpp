@@ -452,6 +452,9 @@ namespace sdl
     constexpr int AUDIO_PAUSE_OFF = 0;
 
 
+    using AudioState = audio::AudioState;
+
+
     class AudioSampleData
     {
     public:
@@ -556,8 +559,10 @@ namespace sdl
     }
 
 
-    static void update_audio(AudioMemory& audio, f32 volume)
+    static void update_audio(AudioState const& state, AudioMemory& audio)
     {
+        auto volume = state.master_volume;
+        
         constexpr Sint16 MAX = 32767;
         constexpr Sint16 MIN = 0;
 

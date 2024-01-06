@@ -103,6 +103,25 @@ main_dep += $(app_h)
 #************
 
 
+#*** sdl cpp ***
+
+sdl_input_c  := $(sdl)/sdl_input.cpp
+sdl_input_o  := $(build)/sdl_input.o
+object_files += $(sdl_input_o)
+
+sdl_input_dep := $(sdl_include_h)
+sdl_input_dep += $(input_state_h)
+
+
+sdl_audio_c := $(sdl)/sdl_audio.cpp
+sdl_audio_o := $(build)/sdl_audio.o
+object_files += $(sdl_audio_o)
+
+sdl_audio_dep := $(sdl_include_h)
+
+#************
+
+
 #*** image cpp ***
 
 image_c := $(output)/image.cpp
@@ -113,18 +132,6 @@ image_dep := $(image_h)
 image_dep += $(stb_image_h)
 
 #*************
-
-
-#*** sdl cpp ***
-
-sdl_input_c  := $(sdl)/sdl_input.cpp
-sdl_input_o  := $(build)/sdl_input.o
-object_files += $(sdl_input_o)
-
-sdl_input_dep := $(sdl_include_h)
-sdl_input_dep += $(input_state_h)
-
-#************
 
 
 #*** util cpp ***
@@ -158,14 +165,19 @@ $(main_o): $(main_c) $(main_dep)
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
-$(image_o): $(image_c) $(image_dep)
-	@echo "\n  image"
-	$(GPP) -o $@ -c $< $(NO_FLAGS)
-
-
 $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)
 	@echo "\n  sdl_input"
 	$(GPP) -o $@ -c $< $(SDL2)
+
+
+$(sdl_audio_o): $(sdl_audio_c) $(sdl_audio_dep)
+	@echo "\n  sdl_audio"
+	$(GPP) -o $@ -c $< $(SDL2)
+
+
+$(image_o): $(image_c) $(image_dep)
+	@echo "\n  image"
+	$(GPP) -o $@ -c $< $(NO_FLAGS)
 
 
 $(util_o): $(util_c) $(util_dep)

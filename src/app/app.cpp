@@ -439,6 +439,12 @@ namespace app
 
     static bool create_state_data(AppState& state)
     {
+        if (!audio::create_audio(state.audio))
+        {
+            printf("Error: audio::create_audio()\n");
+            return false;
+        }
+
         auto data = (StateData*)std::malloc(sizeof(StateData));
         if (!data)
         {
@@ -624,7 +630,7 @@ namespace
     }
 
 
-    void update_audio_volume(f32& audio_volume, input::Input const& input)
+    void update_audio_volume(app::AudioState& state, input::Input const& input)
     {
         constexpr f32 delta = 0.1;
 
@@ -633,7 +639,7 @@ namespace
             return;
         }
 
-        audio_volume += (input.mouse.wheel.y) * delta;
+        state.master_volume += (input.mouse.wheel.y) * delta;
     }
 }
 
@@ -781,8 +787,6 @@ namespace app
 
         state_data.background_color = img::to_pixel(128, 128, 128);
 
-        state.audio_volume = 0.5f;
-
         cleanup();
 
         return true;
@@ -805,7 +809,7 @@ namespace app
         update_controller_colors(state_data.controller_filter, input);
         update_mouse_coords(state_data.mouse_coords, input);
 
-        update_audio_volume(state.audio_volume, input);
+        update_audio_volume(state.audio, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data);

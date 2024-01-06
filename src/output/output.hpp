@@ -33,5 +33,12 @@ namespace image
 
 namespace audio
 {
+    class AudioState
+    {
+    public:
+        f32 master_volume;
+    };
 
+
+    bool create_audio(AudioState& audio);
 }

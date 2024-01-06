@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 #endif
 
         sdl::render_screen(screen);
-        sdl::update_audio(audio, app_state.audio_volume);
+        sdl::update_audio(app_state.audio, audio);
 
         frame_prev = frame_curr;
         frame_curr = !frame_curr;

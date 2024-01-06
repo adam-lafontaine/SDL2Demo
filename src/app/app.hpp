@@ -7,6 +7,7 @@
 namespace app
 {
     using ImageView = image::ImageView;
+    using AudioState = audio::AudioState;
 
 
     class StateData;
@@ -17,7 +18,7 @@ namespace app
     public:
         ImageView screen_view;
 
-        f32 audio_volume;
+        AudioState audio;
 
         StateData* data_ = nullptr;
     };
