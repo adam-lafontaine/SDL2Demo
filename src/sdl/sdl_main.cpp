@@ -102,11 +102,11 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    assert(app_state.screen_view.width);
-    assert(app_state.screen_view.height);
+    assert(app_state.screen.width);
+    assert(app_state.screen.height);
 
-    auto const screen_width = app_state.screen_view.width;
-    auto const screen_height = app_state.screen_view.height;
+    auto const screen_width = app_state.screen.width;
+    auto const screen_height = app_state.screen.height;
 
     if (!screen_width || !screen_height)
     {
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    app_state.screen_view.matrix_data_ = screen.image.data_;
+    app_state.screen.matrix_data_ = screen.image.data_;
 
     input::Input input[2] = {};
     sdl::ControllerInput controller_input = {};

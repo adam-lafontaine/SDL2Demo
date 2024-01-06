@@ -520,10 +520,98 @@ namespace
     }
 
 
+    bool init_screen_filters(app::AppState& state)
+    {
+        Image raw_keyboard;
+        Image raw_mouse;
+        Image raw_controller;
+        Image raw_ascii;
+
+        auto const cleanup = [&]()
+        {
+            img::destroy_image(raw_keyboard);
+            img::destroy_image(raw_mouse);
+            img::destroy_image(raw_controller);
+            img::destroy_image(raw_ascii);
+        };
+
+        if (!load_keyboard_image(raw_keyboard))
+        {
+            printf("Error: load_keyboard_image()\n");
+            cleanup();
+            return false;
+        }
+        
+        if (!load_mouse_image(raw_mouse))
+        {
+            printf("Error: load_mouse_image()\n");
+            cleanup();
+            return false;
+        }
+
+        if (!load_controller_image(raw_controller))
+        {
+            printf("Error: load_controller_image()\n");
+            cleanup();
+            return false;
+        }
+
+        if (!load_ascii_image(raw_ascii))
+        {
+            printf("Error: load_ascii_image()\n");
+            cleanup();
+            return false;
+        }
+        
+        auto const keyboard_width = raw_keyboard.width;
+        auto const keyboard_height = raw_keyboard.height;
+        
+        auto const mouse_width = raw_mouse.width;
+        auto const mouse_height = raw_mouse.height;
+
+        auto const controller_width = raw_controller.width;
+        auto const controller_height = raw_controller.height;
+
+        constexpr u32 ASCII_SCALE = 1;
+
+        auto const ascii_width = raw_ascii.width * ASCII_SCALE;
+        auto const ascii_height = raw_ascii.height * ASCII_SCALE;
+
+        u32 screen_width = std::max(keyboard_width, controller_width + mouse_width);
+        u32 screen_height = keyboard_height + std::max(mouse_height, controller_height);
+
+        constexpr u32 mouse_coord_capacity = sizeof("(0000, 0000)");
+
+        auto& state_data = *state.data_;
+
+        auto const buffer_bytes = screen_width * screen_height + ascii_width * ascii_height + mouse_coord_capacity;
+
+        auto& u8_buffer = state_data.u8_data;
+        u8_buffer = img::create_buffer8(buffer_bytes);   
+
+        init_keyboard_filter(state_data.keyboard_filter, raw_keyboard, u8_buffer);
+        init_mouse_filter(state_data.mouse_filter, raw_mouse, u8_buffer);
+        init_controller_filter(state_data.controller_filter, raw_controller, u8_buffer);
+        init_ascii_filter(state_data.ascii_filter, raw_ascii, ASCII_SCALE, u8_buffer);
+        state_data.mouse_coords = sv::make_view(mouse_coord_capacity, u8_buffer);
+
+        auto& screen = state.screen;
+
+        screen.width = screen_width;
+        screen.height = screen_height;        
+
+        state_data.background_color = img::to_pixel(128, 128, 128);
+
+        cleanup();
+
+        return true;
+    }
+
+
     void init_screen_ui(app::AppState& state)
     {
         auto& state_data = *state.data_;
-        auto& screen = state.screen_view;
+        auto& screen = state.screen;
 
         auto keyboard = to_rect(0, 0, state_data.keyboard_filter.filter.width, state_data.keyboard_filter.filter.height);
 
@@ -705,89 +793,16 @@ namespace app
             printf("Error: create_state_data()\n");
             return false;
         }
-        
-        Image raw_keyboard;
-        Image raw_mouse;
-        Image raw_controller;
-        Image raw_ascii;
 
-        auto const cleanup = [&]()
+        if (!init_screen_filters(state))
         {
-            img::destroy_image(raw_keyboard);
-            img::destroy_image(raw_mouse);
-            img::destroy_image(raw_controller);
-            img::destroy_image(raw_ascii);
-        };
-
-        if (!load_keyboard_image(raw_keyboard))
-        {
-            printf("Error: load_keyboard_image()\n");
-            cleanup();
+            printf("Error: create_state_data()\n");
             return false;
         }
-        
-        if (!load_mouse_image(raw_mouse))
-        {
-            printf("Error: load_mouse_image()\n");
-            cleanup();
-            return false;
-        }
-
-        if (!load_controller_image(raw_controller))
-        {
-            printf("Error: load_controller_image()\n");
-            cleanup();
-            return false;
-        }
-
-        if (!load_ascii_image(raw_ascii))
-        {
-            printf("Error: load_ascii_image()\n");
-            cleanup();
-            return false;
-        }
-        
-        auto const keyboard_width = raw_keyboard.width;
-        auto const keyboard_height = raw_keyboard.height;
-        
-        auto const mouse_width = raw_mouse.width;
-        auto const mouse_height = raw_mouse.height;
-
-        auto const controller_width = raw_controller.width;
-        auto const controller_height = raw_controller.height;
-
-        constexpr u32 ASCII_SCALE = 1;
-
-        auto const ascii_width = raw_ascii.width * ASCII_SCALE;
-        auto const ascii_height = raw_ascii.height * ASCII_SCALE;
-
-        u32 screen_width = std::max(keyboard_width, controller_width + mouse_width);
-        u32 screen_height = keyboard_height + std::max(mouse_height, controller_height);
-
-        constexpr u32 mouse_coord_capacity = sizeof("(0000, 0000)");
 
         auto& state_data = *state.data_;
-        state_data.is_init = false;
 
-        auto const buffer_bytes = screen_width * screen_height + ascii_width * ascii_height + mouse_coord_capacity;
-
-        auto& u8_buffer = state_data.u8_data;
-        u8_buffer = img::create_buffer8(buffer_bytes);   
-
-        init_keyboard_filter(state_data.keyboard_filter, raw_keyboard, u8_buffer);
-        init_mouse_filter(state_data.mouse_filter, raw_mouse, u8_buffer);
-        init_controller_filter(state_data.controller_filter, raw_controller, u8_buffer);
-        init_ascii_filter(state_data.ascii_filter, raw_ascii, ASCII_SCALE, u8_buffer);
-        state_data.mouse_coords = sv::make_view(mouse_coord_capacity, u8_buffer);
-        
-        auto& screen = state.screen_view;
-
-        screen.width = screen_width;
-        screen.height = screen_height;
-
-        state_data.background_color = img::to_pixel(128, 128, 128);
-
-        cleanup();
+        state_data.is_init = false;       
 
         return true;
     }
@@ -795,7 +810,7 @@ namespace app
 
     void update(AppState& state, input::Input const& input)
     {
-        auto& screen = state.screen_view;
+        auto& screen = state.screen;
         auto& state_data = *state.data_;
 
         if (!state_data.is_init)

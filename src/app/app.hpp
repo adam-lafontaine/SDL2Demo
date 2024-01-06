@@ -16,7 +16,7 @@ namespace app
     class AppState
     {
     public:
-        ImageView screen_view;
+        ImageView screen;
 
         AudioState audio;
 
