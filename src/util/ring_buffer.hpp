@@ -38,7 +38,7 @@ namespace ring_buffer
 
 		buffer.capacity = n_elements;
 		buffer.read = 0;
-        buffer.write = 0;
+        buffer.write = 1;
 
 		return true;
     }
@@ -83,40 +83,10 @@ namespace ring_buffer
 
 
     template <typename T>
-    void write_data(RingBuffer<T>& buffer, T* src, u32 length)
-    {    
-        u32 len1 = length;
-        u32 len2 = 0;
-        u32 new_write = buffer.write + length;
-
-        u32 to_end = buffer.capacity - buffer.write;
-
-        if (length > to_end)
-        {
-            len1 = to_end;
-            len2 = length - len1;
-            new_write = len2;
-        }
-
-        T* src1 = src;
-        T* dst1 = buffer.data_ + buffer.write;
-
-        T* src2 = src + len1;
-        T* dst2 = buffer.data_;
-
-        copy(src1, dst1, len1);
-        copy(src2, dst2, len2);
-
-        buffer.write = new_write;
-    }
-
-
-    template <typename T>
-    void read_data(RingBuffer<T>& buffer, T* dst, u32 length)
+    u32 read_data(RingBuffer<T>& buffer, T* dst, u32 length)
     {
         u32 len1 = length;
         u32 len2 = 0;
-        u32 new_read = buffer.read + length;
 
         u32 to_end = buffer.capacity - buffer.read;
 
@@ -124,7 +94,6 @@ namespace ring_buffer
         {
             len1 = to_end;
             len2 = length - len1;
-            new_read = len2;
         }
 
         T* src1 = buffer.data_ + buffer.read;
@@ -136,6 +105,62 @@ namespace ring_buffer
         copy(src1, dst1, len1);
         copy(src2, dst2, len2);
 
-        buffer.read = new_read;
+        buffer.read = (buffer.read + length) % buffer.capacity;
+
+        return len1 + len2;
+    }
+
+
+    template <typename T>
+    u32 write_data(RingBuffer<T>& buffer, T* src, u32 desired_length)
+    {    
+        auto const length = desired_length;
+
+        u32 len1 = length;
+        u32 len2 = 0;
+
+        T* src1 = src;
+        T* dst1 = buffer.data_ + buffer.write;
+
+        T* src2 = nullptr;
+        T* dst2 = nullptr;
+
+        i32 to_read = (i32)buffer.read - (i32)buffer.write;
+        u32 to_end = buffer.capacity - buffer.write;        
+
+        if (to_read > 0)
+        {
+            len1 = (u32)to_read;
+            len1 = len1 < length ? len1 : length;
+        }
+        else if (to_read < 0)
+        {
+            if (length > to_end)
+            {
+                len1 = to_end;
+                len2 = length - to_end;
+                len2 = len2 < buffer.read ? len2 : buffer.read;
+
+                src1 = src;
+                dst1 = buffer.data_ + buffer.write;
+
+                src2 = src1 + len1;
+                dst2 = buffer.data_;
+            }
+        }
+        else
+        {
+            assert(buffer.read == buffer.write);
+            return 0;
+        }  
+
+        copy(src1, dst1, len1);
+        copy(src2, dst2, len2);
+
+        u32 length_written = len1 + len2;
+
+        buffer.write = (buffer.write + length_written) % buffer.capacity;
+
+        return length_written;
     }
 }
