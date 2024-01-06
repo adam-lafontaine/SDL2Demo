@@ -11,6 +11,38 @@ namespace mb = memory_buffer;
 template <class F>
 using fn = std::function<F>;
 
+
+namespace image
+{
+    template <typename T>
+    class MatrixSubView2D
+    {
+    public:
+        T*  matrix_data_;
+        u32 matrix_width;
+
+        u32 width;
+        u32 height;
+
+        union
+        {
+            Rect2Du32 range;
+
+            struct
+            {
+                u32 x_begin;
+                u32 x_end;
+                u32 y_begin;
+                u32 y_end;
+            };
+        };
+    };
+
+
+    using SubView = MatrixSubView2D<Pixel>;    
+    using GraySubView = MatrixSubView2D<u8>;
+}
+
 namespace image
 {
     using Buffer8 = MemoryBuffer<u8>;
@@ -43,7 +75,7 @@ namespace image
 	}
 
 
-    void destroy_image(Image& image);
+    
 }
 
 

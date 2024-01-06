@@ -5,7 +5,20 @@
 
 namespace image
 {
-    
+    bool create_image(Image& image, u32 width, u32 height)
+    {
+        auto data = (Pixel*)std::malloc((size_t)(sizeof(Pixel) * width * height));
+        if (!data)
+        {
+            return false;
+        }
+
+        image.data_ = data;
+        image.width = width;
+        image.height = height;
+
+        return true;
+    }
 
     
     void destroy_image(Image& image)
