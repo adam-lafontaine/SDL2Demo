@@ -12,6 +12,8 @@ namespace app
     public:
         ImageView screen_view;
 
+        f32 audio_volume;
+
         StateData* data_ = nullptr;
     };
 

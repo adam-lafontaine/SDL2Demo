@@ -607,10 +607,14 @@ namespace sdl
 
 namespace sdl
 {
+    constexpr int AUDIO_PAUSE_ON = 1;
+    constexpr int AUDIO_PAUSE_OFF = 0;
+
+
     class AudioSampleData
     {
     public:
-        int placeholder;
+        Sint16 audio_volume;
 
     };
 
@@ -620,7 +624,7 @@ namespace sdl
     public:
         SDL_AudioSpec settings;
 
-        AudioSampleData sample_data;
+        AudioSampleData sample_data;        
 
         int device_id = 0;
         bool is_paused = true;
@@ -637,18 +641,17 @@ namespace sdl
         static int BytesPerSample = sizeof(Sint16) * 1;
         static int SampleIndex = 0;
         static int ToneHz = 262;
-        static Sint16 ToneVolume = 3000;
         static int WavePeriod = SamplesPerSecond / ToneHz;
 
         
         int samples_to_write = length / BytesPerSample;
         for (int i = 0; i < samples_to_write; i++)
         {
-            auto value = ToneVolume;
+            auto value = sample_data.audio_volume;
 
             if ((SampleIndex / WavePeriod) % 2)
             {
-                value = -ToneVolume;
+                value = -value;
             }
 
             *sample_buffer++ = value;
@@ -683,6 +686,8 @@ namespace sdl
             return false;
         }
 
+        audio.sample_data.audio_volume = 0;
+
         audio.device_id = 1;
         audio.is_paused = true;
 
@@ -694,7 +699,7 @@ namespace sdl
     {
         if (audio.is_paused)
         {
-            SDL_PauseAudioDevice(audio.device_id, 0);
+            SDL_PauseAudioDevice(audio.device_id, sdl::AUDIO_PAUSE_OFF);
             audio.is_paused = false;
         }
     }
@@ -704,9 +709,25 @@ namespace sdl
     {
         if (!audio.is_paused)
         {
-            SDL_PauseAudioDevice(audio.device_id, 1);
+            SDL_PauseAudioDevice(audio.device_id, sdl::AUDIO_PAUSE_ON);
             audio.is_paused = true;
         }
     }
+
+
+    static void update_audio(AudioMemory& audio, f32 volume)
+    {
+        constexpr Sint16 MAX = 32767;
+        constexpr Sint16 MIN = 0;
+
+        auto hi = volume > 1.0f;
+        auto lo = volume < 0.0f;
+        auto ok = !hi && !lo;
+
+        audio.sample_data.audio_volume = (Sint16)(hi * MAX + lo * MIN + ok * volume * (MAX - MIN));
+    }
+
+
+    
 
 }

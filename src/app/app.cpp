@@ -992,6 +992,19 @@ namespace
 
         coords.length = strlen(coords.data_);
     }
+
+
+    void update_audio_volume(f32& audio_volume, input::Input const& input)
+    {
+        constexpr f32 delta = 0.1;
+
+        if (input.mouse.wheel.y == 0)
+        {
+            return;
+        }
+
+        audio_volume += (input.mouse.wheel.y) * delta;
+    }
 }
 
 
@@ -1138,6 +1151,8 @@ namespace app
 
         state_data.background_color = img::to_pixel(128, 128, 128);
 
+        state.audio_volume = 0.5f;
+
         cleanup();
 
         return true;
@@ -1159,6 +1174,8 @@ namespace app
         update_mouse_colors(state_data.mouse_filter, input);
         update_controller_colors(state_data.controller_filter, input);
         update_mouse_coords(state_data.mouse_coords, input);
+
+        update_audio_volume(state.audio_volume, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data);

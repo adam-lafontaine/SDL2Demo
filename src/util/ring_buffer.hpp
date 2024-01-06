@@ -85,6 +85,10 @@ namespace ring_buffer
     template <typename T>
     u32 read_data(RingBuffer<T>& buffer, T* dst, u32 length)
     {
+        i32 to_write = (i32)buffer.write - (i32)buffer.read;
+        u32 available = to_write >= 0 ? (u32)to_write : buffer.capacity - buffer.read + buffer.write;
+        assert(available >= length);
+
         u32 len1 = length;
         u32 len2 = 0;
 
