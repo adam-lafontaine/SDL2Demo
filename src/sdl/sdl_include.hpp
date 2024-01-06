@@ -603,3 +603,110 @@ namespace sdl
 }
 
 #endif
+
+
+namespace sdl
+{
+    class AudioSampleData
+    {
+    public:
+        int placeholder;
+
+    };
+
+
+    class AudioMemory
+    {
+    public:
+        SDL_AudioSpec settings;
+
+        AudioSampleData sample_data;
+
+        int device_id = 0;
+        bool is_paused = true;
+    };
+
+
+
+    static void read_sample_bytes(void *user_data, Uint8* device_buffer, int length)
+    {
+        auto& sample_data = *(AudioSampleData*)user_data;
+        auto sample_buffer = (Sint16*)device_buffer;
+
+        static int SamplesPerSecond = 48000;
+        static int BytesPerSample = sizeof(Sint16) * 1;
+        static int SampleIndex = 0;
+        static int ToneHz = 262;
+        static Sint16 ToneVolume = 3000;
+        static int WavePeriod = SamplesPerSecond / ToneHz;
+
+        
+        int samples_to_write = length / BytesPerSample;
+        for (int i = 0; i < samples_to_write; i++)
+        {
+            auto value = ToneVolume;
+
+            if ((SampleIndex / WavePeriod) % 2)
+            {
+                value = -ToneVolume;
+            }
+
+            *sample_buffer++ = value;
+            SampleIndex++;            
+        }
+
+    }
+
+
+    static bool create_audio_memory(AudioMemory& audio)
+    {
+        auto& settings = audio.settings;
+        settings = {};
+
+        settings.freq = 48000;
+        settings.format = AUDIO_S16;
+        settings.channels = 1; // 1 = mono, 2 = stereo
+        settings.samples = 4096;
+        settings.callback = &read_sample_bytes;
+        settings.userdata = &audio.sample_data;
+
+        auto error = SDL_OpenAudio(&settings, 0);
+        if (error)
+        {
+            display_error("SDL_OpenAudio failed");
+            return false;
+        }
+
+        if (settings.format != AUDIO_S16)
+        {
+            display_error("SDL_OpenAudio - settings.format != AUDIO_S16");
+            return false;
+        }
+
+        audio.device_id = 1;
+        audio.is_paused = true;
+
+        return true;
+    }
+
+
+    static void play_audio(AudioMemory& audio)
+    {
+        if (audio.is_paused)
+        {
+            SDL_PauseAudioDevice(audio.device_id, 0);
+            audio.is_paused = false;
+        }
+    }
+
+
+    static void pause_audio(AudioMemory& audio)
+    {
+        if (!audio.is_paused)
+        {
+            SDL_PauseAudioDevice(audio.device_id, 1);
+            audio.is_paused = true;
+        }
+    }
+
+}

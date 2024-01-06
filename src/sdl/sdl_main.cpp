@@ -1,7 +1,6 @@
 #include "sdl_include.hpp"
 #include "../util/stopwatch.hpp"
 #include "../app/app.hpp"
-#include "../util/ring_buffer.hpp"
 
 #ifndef NDEBUG
 
@@ -134,11 +133,15 @@ int main(int argc, char *argv[])
 
     app_state.screen_view.matrix_data_ = screen.image.data_;
 
+    sdl::AudioMemory audio{};
+    sdl::create_audio_memory(audio);
+
     input::Input input[2] = {};
     sdl::ControllerInput controller_input = {};
 
     auto const cleanup = [&]()
     {
+        sdl::pause_audio(audio);
         app::close(app_state);
         sdl::close_game_controllers(controller_input, input[0]);
         sdl::close();
@@ -162,6 +165,7 @@ f64 ns_elapsed = 0.0;
 #endif
 
     g_running = true;
+    sdl::play_audio(audio);
 
     sw.start();
     while(g_running)
