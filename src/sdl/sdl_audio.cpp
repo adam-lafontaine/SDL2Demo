@@ -23,6 +23,8 @@ namespace
         return 
             has_extension(filename, ".mp3") || 
             has_extension(filename, ".MP3") ||
+            has_extension(filename, ".ogg") || 
+            has_extension(filename, ".OGG") ||
             has_extension(filename, ".wav") ||
             has_extension(filename, ".WAV");
     }
@@ -83,7 +85,7 @@ namespace audio
 
     bool init_audio()
     {
-        Mix_Init(MIX_INIT_MP3);
+        Mix_Init(MIX_INIT_MP3 | MIX_INIT_OGG);
 	    SDL_Init(SDL_INIT_AUDIO);
 
         int const freq = 44100;
