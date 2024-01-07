@@ -34,6 +34,12 @@
     <Filter Include="Source Files\sdl">
       <UniqueIdentifier>{6cfe1da4-87fe-4e23-93f6-ce9044019a68}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\output">
+      <UniqueIdentifier>{d2aace14-6bad-4c8b-b35a-2eaaff8056e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\output">
+      <UniqueIdentifier>{6732b699-6b48-4608-9841-3fdf17a38cd6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\app\app.hpp">
@@ -72,6 +78,15 @@
     <ClInclude Include="..\..\..\src\util\stb_image\stb_image_options.hpp">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\output\image.hpp">
+      <Filter>Header Files\output</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\output\output.hpp">
+      <Filter>Header Files\output</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\output\audio.hpp">
+      <Filter>Header Files\output</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\app\app.cpp">
@@ -85,6 +100,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\util\util.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\output\image.cpp">
+      <Filter>Source Files\output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sdl\sdl_audio.cpp">
+      <Filter>Source Files\sdl</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

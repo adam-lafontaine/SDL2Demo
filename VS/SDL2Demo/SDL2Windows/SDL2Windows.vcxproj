@@ -137,6 +137,9 @@
     <ClInclude Include="..\..\..\src\input\input_state.hpp" />
     <ClInclude Include="..\..\..\src\input\keyboard_input.hpp" />
     <ClInclude Include="..\..\..\src\input\mouse_input.hpp" />
+    <ClInclude Include="..\..\..\src\output\audio.hpp" />
+    <ClInclude Include="..\..\..\src\output\image.hpp" />
+    <ClInclude Include="..\..\..\src\output\output.hpp" />
     <ClInclude Include="..\..\..\src\sdl\sdl_include.hpp" />
     <ClInclude Include="..\..\..\src\util\memory_buffer.hpp" />
     <ClInclude Include="..\..\..\src\util\qsprintf\qsprintf.hpp" />
@@ -146,6 +149,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\app\app.cpp" />
+    <ClCompile Include="..\..\..\src\output\image.cpp" />
+    <ClCompile Include="..\..\..\src\sdl\sdl_audio.cpp" />
     <ClCompile Include="..\..\..\src\sdl\sdl_input.cpp" />
     <ClCompile Include="..\..\..\src\sdl\sdl_main.cpp" />
     <ClCompile Include="..\..\..\src\util\util.cpp" />
