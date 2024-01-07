@@ -24,6 +24,7 @@ using Pixel = img::Pixel;
 using GrayView = img::GrayView;
 using GraySubView = img::GraySubView;
 using SubView = img::SubView;
+using Sound = audio::Sound;
 
 
 static Rect2Du32 to_rect(u16 x, u16 y, u32 width, u32 height)
@@ -143,7 +144,18 @@ namespace
 
 namespace
 {
+    const auto LASER_SOUND_PATH = ASSETS_DIR / "laserLarge_000.ogg";
 
+
+    bool load_laser_sound(Sound& sound)
+    {
+        if (!audio::load_sound_from_file(LASER_SOUND_PATH.string().c_str(), sound))
+        {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 
@@ -421,16 +433,56 @@ namespace filter
 }
 
 
+namespace sound
+{
+    class State
+    {
+    public:
+        Sound sound;
+        b32 is_on;
+    };
+
+    class SoundState
+    {
+    public:
+        static constexpr u32 count = 1;
+
+        union 
+        {
+            State list[count];
+
+            struct 
+            {
+                State laser;
+            };
+        };
+
+    };
+}
+
+
 namespace app
 {
+    
+
     class AudioState
     {
     public:
         f32 master_volume;
 
-        u32 n_music;
-        u32 n_sound;
+        sound::SoundState sounds;
+
+        
     };
+
+
+    void destroy_audio_state(AudioState& audio)
+    {
+        for (u32 i = 0; i < audio.sounds.count; i++)
+        {
+            audio::destroy_sound(audio.sounds.list[i].sound);
+        }        
+    }
 
 
     class StateData
@@ -475,6 +527,8 @@ namespace app
     static void destroy_state_data(AppState& state)
     {
         auto& state_data = *state.data_;
+
+        destroy_audio_state(state_data.audio);
         
         mb::destroy_buffer(state_data.u8_data);
 
@@ -632,6 +686,18 @@ namespace
 
         audio.master_volume = 0.5f;
 
+        auto& sounds = audio.sounds;
+
+        if (!load_laser_sound(sounds.laser.sound))
+        {
+            return false;
+        }
+
+        for (u32 i = 0; i < sounds.count; i++)
+        {
+            sounds.list[i].is_on = false;
+        }
+
         return true;
     }
 
@@ -757,6 +823,15 @@ namespace
 
         state.master_volume += (input.mouse.wheel.y) * delta;
     }
+
+
+    void update_sounds(sound::SoundState& sounds, input::Input const& input)
+    {
+        if (input.keyboard.kbd_1.is_down && !sounds.laser.is_on)
+        {
+            sounds.laser.is_on = true;
+        }
+    }
 }
 
 
@@ -806,6 +881,20 @@ namespace
         }
 
         img::transform(filter.filter, state.screen_controller, filter::to_render_color);
+    }
+
+
+    void play_sounds(sound::SoundState& sounds)
+    {
+        for (u32 i = 0; i < sounds.count; i++)
+        {
+            auto& sound = sounds.list[i];
+            if (sound.is_on)
+            {
+                audio::play_sound(sound.sound);
+                sound.is_on = false;
+            }
+        }
     }
 }
 
@@ -862,11 +951,14 @@ namespace app
         update_mouse_coords(state_data.mouse_coords, input);
 
         update_audio_volume(state_data.audio, input);
+        update_sounds(state_data.audio.sounds, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data);
         render_mouse(state_data);
         render_controller(state_data);
+
+        play_sounds(state_data.audio.sounds);
     }
 
 
