@@ -32,7 +32,7 @@ namespace
 
     static f32 get_volume()
     {
-        constexpr int MAX = 128;
+        constexpr int MAX = MIX_MAX_VOLUME;
         constexpr int MIN = 0;
 
         auto i_volume = Mix_Volume(-1, -1);
@@ -145,7 +145,7 @@ namespace audio
     }
 
 
-    void set_volume(f32 volume)
+    f32 set_volume(f32 volume)
     {
         constexpr int MAX = 128;
         constexpr int MIN = 0;
@@ -155,12 +155,13 @@ namespace audio
         auto ok = !hi && !lo;
 
         auto i_volume = (int)(hi * MAX + lo * MIN + ok * volume * (MAX - MIN));
-        if (i_volume == get_volume())
+        if (i_volume == Mix_Volume(-1, -1))
         {
-            return;
+            return get_volume();
         }
 
         Mix_Volume(-1, i_volume);
+        return get_volume();
     }
 
 
@@ -168,6 +169,19 @@ namespace audio
     {
         constexpr int FOREVER = -1;
         Mix_PlayMusic((music_p)music.data_, FOREVER);
+    }
+
+
+    void toggle_pause_music(Music const& music)
+    {
+        if (Mix_PausedMusic() == 1)
+        {
+            Mix_ResumeMusic();
+        }
+        else
+        {
+            Mix_PauseMusic();
+        }
     }
 
 

@@ -25,6 +25,7 @@ using GrayView = img::GrayView;
 using GraySubView = img::GraySubView;
 using SubView = img::SubView;
 using Sound = audio::Sound;
+using Music = audio::Music;
 
 
 static Rect2Du32 to_rect(u16 x, u16 y, u32 width, u32 height)
@@ -95,47 +96,33 @@ namespace
     const auto ASCII_IMAGE_PATH = ASSETS_DIR / "ascii.png";
 
 
-    bool load_keyboard_image(Image& image)
+    inline bool load_image(fs::path const& path, Image& image)
     {
-        if (!img::read_image_from_file(KEYBOARD_IMAGE_PATH.string().c_str(), image))
-        {
-            return false;
-        }
+        return img::read_image_from_file(path.string().c_str(), image);
+    }
 
-        return true;
+
+    bool load_keyboard_image(Image& image)
+    {        
+        return load_image(KEYBOARD_IMAGE_PATH, image);
     }
 
 
     bool load_mouse_image(Image& image)
     {
-        if (!img::read_image_from_file(MOUSE_IMAGE_PATH.string().c_str(), image))
-        {
-            return false;
-        }
-
-        return true;
+        return load_image(MOUSE_IMAGE_PATH, image);
     }
 
 
     bool load_controller_image(Image& image)
     {
-        if (!img::read_image_from_file(CONTROLLER_IMAGE_PATH.string().c_str(), image))
-        {
-            return false;
-        }
-
-        return true;
+        return load_image(CONTROLLER_IMAGE_PATH, image);
     }
     
 
     bool load_ascii_image(Image& image)
     {
-        if (!img::read_image_from_file(ASCII_IMAGE_PATH.string().c_str(), image))
-        {
-            return false;
-        }
-
-        return true;
+        return load_image(ASCII_IMAGE_PATH, image);
     }
 }
 
@@ -151,17 +138,18 @@ namespace
     const auto RETRO_SOUND_PATH = ASSETS_DIR / "laserRetro_003.ogg";
     const auto DOOR_SOUND_PATH = ASSETS_DIR / "doorOpen_000.ogg";
     const auto FORCE_FIELD_SOUND_PATH = ASSETS_DIR / "forceField_000.ogg";
-    const auto MUSIC_PATH = ASSETS_DIR / "mellow-future-bass-bounce-on-it-184234.mp3";
+    const auto MELLOW_MUSIC_PATH = ASSETS_DIR / "mellow-future-bass-bounce-on-it-184234.mp3";
 
 
     inline bool load_sound(fs::path const& path, Sound& sound)
     {
-        if (!audio::load_sound_from_file(path.string().c_str(), sound))
-        {
-            return false;
-        }
+        return audio::load_sound_from_file(path.string().c_str(), sound);
+    }
 
-        return true;
+
+    inline bool load_music(fs::path const& path, Music& music)
+    {
+        return audio::load_music_from_file(path.string().c_str(), music);
     }
 
 
@@ -186,6 +174,12 @@ namespace
     bool load_force_field_sound(Sound& sound)
     {
         return load_sound(FORCE_FIELD_SOUND_PATH, sound);
+    }
+
+
+    bool load_mellow_music(Music& music)
+    {
+        return load_music(MELLOW_MUSIC_PATH, music);
     }
 }
 
@@ -495,6 +489,34 @@ namespace sound
 }
 
 
+namespace music
+{
+    class State
+    {
+    public:
+        Music music;
+        b32 is_on;
+    };
+
+
+    class MusicState
+    {
+    public:
+        static constexpr u32 count = 1;
+
+        union 
+        {
+            State list[count];
+
+            struct 
+            {
+                State song;
+            };
+        };
+    };
+}
+
+
 namespace app
 {
     
@@ -505,8 +527,7 @@ namespace app
         f32 master_volume;
 
         sound::SoundState sounds;
-
-        
+        music::MusicState music;        
     };
 
 
@@ -515,7 +536,12 @@ namespace app
         for (u32 i = 0; i < audio.sounds.count; i++)
         {
             audio::destroy_sound(audio.sounds.list[i].sound);
-        }        
+        }
+
+        for (u32 i = 0; i < audio.music.count; i++)
+        {
+            audio::destroy_music(audio.music.list[i].music);
+        }
     }
 
 
@@ -742,9 +768,22 @@ namespace
             return false;
         }
 
+        auto& music = audio.music;
+
+        if (!load_mellow_music(music.song.music))
+        {
+            return false;
+        }
+        
+
         for (u32 i = 0; i < sounds.count; i++)
         {
             sounds.list[i].is_on = false;
+        }
+
+        for (u32 i = 0; i < music.count; i++)
+        {
+            music.list[i].is_on = false;
         }
 
         return true;
@@ -889,6 +928,24 @@ namespace
         map_sound_input(input.keyboard.kbd_3, sounds.door);
         map_sound_input(input.keyboard.kbd_4, sounds.force_field);
     }
+
+
+    void update_music(music::MusicState& music, input::Input const& input)
+    {
+        if (input.keyboard.kbd_space.is_down)
+        {
+            if (music.song.is_on)
+            {
+                audio::toggle_pause_music(music.song.music);
+            }
+            else
+            {
+                audio::play_music(music.song.music);
+                music.song.is_on = true;
+            }
+        }
+    }
+
 }
 
 
@@ -943,7 +1000,7 @@ namespace
 
     void play_audio(app::AudioState& audio)
     {
-        audio::set_volume(audio.master_volume);
+        audio.master_volume = audio::set_volume(audio.master_volume);
 
 
         auto& sounds = audio.sounds;
@@ -1013,6 +1070,7 @@ namespace app
 
         update_audio_volume(state_data.audio, input);
         update_sounds(state_data.audio.sounds, input);
+        update_music(state_data.audio.music, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data);
