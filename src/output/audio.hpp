@@ -13,11 +13,18 @@ namespace audio
 
     bool load_sound_from_file(cstr sound_file_path, Sound& sound);
 
-    f32 set_volume(f32 volume);
+    f32 set_music_volume(f32 volume);
+
+    f32 set_sound_volume(f32 volume);
 
     void play_music(Music const& music);
 
     void toggle_pause_music(Music const& music);
 
     void play_sound(Sound const& sound);
+
+    inline f32 set_master_volume(f32 volume)
+    {
+        return set_music_volume(set_sound_volume(volume));
+    }
 }

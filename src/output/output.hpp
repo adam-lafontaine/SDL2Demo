@@ -38,6 +38,8 @@ namespace audio
     public:
         void* data_;
 
+        // TODO: is_playing, paused etc.
+
         int placeholder;
     };
 

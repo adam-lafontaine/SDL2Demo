@@ -28,16 +28,41 @@ using Sound = audio::Sound;
 using Music = audio::Music;
 
 
-static Rect2Du32 to_rect(u16 x, u16 y, u32 width, u32 height)
-{
-    Rect2Du32 range{};
-    range.x_begin = x;
-    range.x_end = x + width;
-    range.y_begin = y;
-    range.y_end = y + height;
+/* helpers */
 
-    return range;
+namespace
+{
+    static Rect2Du32 to_rect(u16 x, u16 y, u32 width, u32 height)
+    {
+        Rect2Du32 range{};
+        range.x_begin = x;
+        range.x_end = x + width;
+        range.y_begin = y;
+        range.y_end = y + height;
+
+        return range;
+    }
+
+
+    template <typename T>
+    static constexpr T clamp(T value, T min, T max)
+    {
+        const T t = value < min ? min : value;
+        return t > max ? max : t;
+    }
+
+    
+    template <typename T>
+    static f32 sign(T value)
+    {
+        if (!value)
+            return 0.0f;
+        
+        return (f32)value < 0.0f ? -1.0f : 1.0f;
+    }
 }
+
+
 
 
 /* string_view */
@@ -902,22 +927,25 @@ namespace
 
     void update_audio_volume(app::AudioState& state, input::Input const& input)
     {
-        constexpr f32 delta = 0.1;
+        constexpr f32 delta = 0.02;
 
-        if (input.mouse.wheel.y == 0)
+        auto adj = sign(input.mouse.wheel.y);
+
+        if (!adj)
         {
             return;
         }
 
-        state.master_volume += (input.mouse.wheel.y) * delta;
+        state.master_volume = audio::set_master_volume(state.master_volume + adj * delta);
     }
 
 
     void update_sounds(sound::SoundState& sounds, input::Input const& input)
     {
+        // TODO: play here
         auto const map_sound_input = [](auto const& btn, auto& sound)
         {
-            if (btn.is_down && !sound.is_on)
+            if (btn.pressed && !sound.is_on)
             {
                 sound.is_on = true;
             }
@@ -932,7 +960,7 @@ namespace
 
     void update_music(music::MusicState& music, input::Input const& input)
     {
-        if (input.keyboard.kbd_space.is_down)
+        if (input.keyboard.kbd_space.pressed)
         {
             if (music.song.is_on)
             {
@@ -998,9 +1026,10 @@ namespace
     }
 
 
+    // TODO: delete
     void play_audio(app::AudioState& audio)
     {
-        audio.master_volume = audio::set_volume(audio.master_volume);
+        //audio.master_volume = audio::set_volume(audio.master_volume);
 
 
         auto& sounds = audio.sounds;

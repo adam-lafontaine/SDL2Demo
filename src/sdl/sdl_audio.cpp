@@ -30,14 +30,33 @@ namespace
     }
 
 
-    static f32 get_volume()
+    static f32 get_music_volume()
+    {
+        constexpr int MAX = MIX_MAX_VOLUME;
+        constexpr int MIN = 0;
+        
+        auto i_volume = Mix_VolumeMusic(-1);        
+
+        return (f32)(i_volume - MIN) / (MAX - MIN);
+    }
+
+
+    static f32 get_sound_volume()
     {
         constexpr int MAX = MIX_MAX_VOLUME;
         constexpr int MIN = 0;
 
-        auto i_volume = Mix_Volume(-1, -1);
+        auto i_volume = Mix_Volume(-1, -1);        
 
         return (f32)(i_volume - MIN) / (MAX - MIN);
+    }
+
+
+    template <typename T>
+    static constexpr T clamp(T value, T min, T max)
+    {
+        const T t = value < min ? min : value;
+        return t > max ? max : t;
     }
 }
 
@@ -85,7 +104,7 @@ namespace audio
             return false;
         }
 
-        set_volume(0.5f);
+        set_master_volume(0.5f);
 
         return true;
     }
@@ -145,23 +164,39 @@ namespace audio
     }
 
 
-    f32 set_volume(f32 volume)
+    f32 set_music_volume(f32 volume)
     {
-        constexpr int MAX = 128;
+        constexpr int MAX = MIX_MAX_VOLUME;
         constexpr int MIN = 0;
 
-        auto hi = volume > 1.0f;
-        auto lo = volume < 0.0f;
-        auto ok = !hi && !lo;
+        volume = clamp(volume, 0.0f, 1.0f);
 
-        auto i_volume = (int)(hi * MAX + lo * MIN + ok * volume * (MAX - MIN));
+        auto i_volume = (int)(volume * (MAX - MIN));
+        if (i_volume == Mix_VolumeMusic(-1))
+        {
+            return get_music_volume();
+        }
+        
+        Mix_VolumeMusic(i_volume);
+        return get_music_volume();
+    }
+
+
+    f32 set_sound_volume(f32 volume)
+    {
+        constexpr int MAX = MIX_MAX_VOLUME;
+        constexpr int MIN = 0;
+
+        volume = clamp(volume, 0.0f, 1.0f);
+
+        auto i_volume = (int)(volume * (MAX - MIN));
         if (i_volume == Mix_Volume(-1, -1))
         {
-            return get_volume();
+            return get_sound_volume();
         }
 
         Mix_Volume(-1, i_volume);
-        return get_volume();
+        return get_sound_volume();
     }
 
 
