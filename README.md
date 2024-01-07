@@ -26,6 +26,7 @@ Install SDL2
 
 ```
 apt-get install libsdl2-dev
+apt-get install libsdl2-mixer-dev
 ```
 
 Create the build directory
@@ -53,6 +54,7 @@ Install SDL2
 
 ```
 .\vcpkg.exe install sdl2:x64-windows
+.\vcpkg.exe install sdl2-mixer:x64-windows
 ```
 
 Run the Visual Studio solution in /VS/SDL2Demo
