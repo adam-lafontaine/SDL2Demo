@@ -1,7 +1,7 @@
 #include "sdl_include.hpp"
-#include <SDL2/SDL_mixer.h>
+#include "../output/audio.hpp"
 
-#include <vector>
+#include <SDL2/SDL_mixer.h>
 #include <cstring>
 #include <cassert>
 
@@ -27,21 +27,6 @@ namespace
             has_extension(filename, ".OGG") ||
             has_extension(filename, ".wav") ||
             has_extension(filename, ".WAV");
-    }
-
-
-    static void set_volume(f32 volume)
-    {
-        constexpr int MAX = 128;
-        constexpr int MIN = 0;
-
-        auto hi = volume > 1.0f;
-        auto lo = volume < 0.0f;
-        auto ok = !hi && !lo;
-
-        auto i_volume = (int)(hi * MAX + lo * MIN + ok * volume * (MAX - MIN));
-
-        Mix_Volume(-1, i_volume);
     }
 
 
@@ -157,6 +142,25 @@ namespace audio
         sound.placeholder = 0;
 
         return true;
+    }
+
+
+    void set_volume(f32 volume)
+    {
+        constexpr int MAX = 128;
+        constexpr int MIN = 0;
+
+        auto hi = volume > 1.0f;
+        auto lo = volume < 0.0f;
+        auto ok = !hi && !lo;
+
+        auto i_volume = (int)(hi * MAX + lo * MIN + ok * volume * (MAX - MIN));
+        if (i_volume == get_volume())
+        {
+            return;
+        }
+
+        Mix_Volume(-1, i_volume);
     }
 
 

@@ -884,8 +884,12 @@ namespace
     }
 
 
-    void play_sounds(sound::SoundState& sounds)
+    void play_audio(app::AudioState& audio)
     {
+        audio::set_volume(audio.master_volume);
+
+
+        auto& sounds = audio.sounds;
         for (u32 i = 0; i < sounds.count; i++)
         {
             auto& sound = sounds.list[i];
@@ -958,7 +962,7 @@ namespace app
         render_mouse(state_data);
         render_controller(state_data);
 
-        play_sounds(state_data.audio.sounds);
+        play_audio(state_data.audio);
     }
 
 

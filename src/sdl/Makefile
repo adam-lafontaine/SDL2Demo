@@ -127,6 +127,7 @@ sdl_audio_o := $(build)/sdl_audio.o
 object_files += $(sdl_audio_o)
 
 sdl_audio_dep := $(sdl_include_h)
+sdl_audio_dep += $(audio_h)
 
 #************
 

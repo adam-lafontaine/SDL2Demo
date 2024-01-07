@@ -13,6 +13,8 @@ namespace audio
 
     bool load_sound_from_file(cstr sound_file_path, Sound& sound);
 
+    void set_volume(f32 volume);
+
     void play_music(Music const& music);
 
     void play_sound(Sound const& sound);
