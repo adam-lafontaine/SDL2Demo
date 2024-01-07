@@ -33,12 +33,26 @@ namespace image
 
 namespace audio
 {
-    class AudioState
+    class Music
     {
     public:
-        f32 master_volume;
+        void* data_;
+
+        int placeholder;
     };
 
 
-    bool create_audio(AudioState& audio);
+    class Sound
+    {
+    public:
+        void* data_;
+
+        int placeholder;
+    };
+
+
+    void destroy_music(Music& music);
+
+    void destroy_sound(Sound& sound);
+
 }

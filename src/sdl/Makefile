@@ -4,7 +4,8 @@ GPP := g++-11 -std=c++17
 #GPP += -DNDEBUG
 
 # apt-get install libsdl2-dev
-SDL2 := `sdl2-config --cflags --libs`
+# apt-get install libsdl2-mixer-dev
+SDL2 := -lSDL2 -lSDL2_mixer
 NO_FLAGS := 
 
 ALL_LFLAGS := $(SDL2)
@@ -70,6 +71,14 @@ image_h += $(output_h)
 image_h += $(memory_buffer_h)
 
 #**************
+
+
+#*** audio ***
+
+audio_h := $(output)/audio.hpp
+audio_h += $(output_h)
+
+#*************
 
 
 #*** sdl ***
@@ -155,6 +164,7 @@ object_files += $(app_o)
 
 app_dep := $(app_h)
 app_dep += $(image_h)
+app_dep += $(audio_h)
 app_dep += $(qsprintf_h)
 
 #************

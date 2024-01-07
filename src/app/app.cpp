@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include "../output/image.hpp"
+#include "../output/audio.hpp"
 #include "../util/qsprintf/qsprintf.hpp"
 
 #include <filesystem>
@@ -135,6 +136,14 @@ namespace
 
         return true;
     }
+}
+
+
+/* audio files */
+
+namespace
+{
+
 }
 
 
@@ -414,6 +423,16 @@ namespace filter
 
 namespace app
 {
+    class AudioState
+    {
+    public:
+        f32 master_volume;
+
+        u32 n_music;
+        u32 n_sound;
+    };
+
+
     class StateData
     {
     public:
@@ -432,6 +451,8 @@ namespace app
         SubView screen_controller;
         SubView screen_mouse_coords;
 
+        AudioState audio;
+
         b32 is_init;
         MemoryBuffer<u8> u8_data;
     };
@@ -439,12 +460,6 @@ namespace app
 
     static bool create_state_data(AppState& state)
     {
-        if (!audio::create_audio(state.audio))
-        {
-            printf("Error: audio::create_audio()\n");
-            return false;
-        }
-
         auto data = (StateData*)std::malloc(sizeof(StateData));
         if (!data)
         {
@@ -603,6 +618,19 @@ namespace
         state_data.background_color = img::to_pixel(128, 128, 128);
 
         cleanup();
+
+        return true;
+    }
+
+
+    bool init_audio(app::AudioState& audio)
+    {
+        if (!audio::init_audio())
+        {
+            return false;
+        }
+
+        audio.master_volume = 0.5f;
 
         return true;
     }
@@ -791,16 +819,25 @@ namespace app
         if (!create_state_data(state))
         {
             printf("Error: create_state_data()\n");
+            close(state);
             return false;
         }
 
         if (!init_screen_filters(state))
         {
             printf("Error: create_state_data()\n");
+            close(state);
             return false;
         }
 
         auto& state_data = *state.data_;
+
+        if (!init_audio(state_data.audio))
+        {
+            printf("Error: init_audio()\n");
+            close(state);
+            return false;
+        }
 
         state_data.is_init = false;       
 
@@ -824,7 +861,7 @@ namespace app
         update_controller_colors(state_data.controller_filter, input);
         update_mouse_coords(state_data.mouse_coords, input);
 
-        update_audio_volume(state.audio, input);
+        update_audio_volume(state_data.audio, input);
 
         img::fill(screen, state_data.background_color);
         render_keyboard(state_data);
@@ -836,5 +873,6 @@ namespace app
     void close(AppState& state)
     {
         destroy_state_data(state);
+        audio::close_audio();
     }
 }

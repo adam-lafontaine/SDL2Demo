@@ -251,6 +251,8 @@ namespace sdl
 }
 
 
+/* screen memory */
+
 namespace sdl
 {
     class ScreenMemory
@@ -446,13 +448,12 @@ namespace sdl
 }
 
 
+/* audio memory */
+/*
 namespace sdl
 {
     constexpr int AUDIO_PAUSE_ON = 1;
     constexpr int AUDIO_PAUSE_OFF = 0;
-
-
-    using AudioState = audio::AudioState;
 
 
     class AudioSampleData
@@ -473,7 +474,6 @@ namespace sdl
         int device_id = 0;
         bool is_paused = true;
     };
-
 
 
     static void read_sample_bytes(void *user_data, Uint8* device_buffer, int length)
@@ -562,7 +562,7 @@ namespace sdl
     static void update_audio(AudioState const& state, AudioMemory& audio)
     {
         auto volume = state.master_volume;
-        
+
         constexpr Sint16 MAX = 32767;
         constexpr Sint16 MIN = 0;
 
@@ -571,9 +571,7 @@ namespace sdl
         auto ok = !hi && !lo;
 
         audio.sample_data.audio_volume = (Sint16)(hi * MAX + lo * MIN + ok * volume * (MAX - MIN));
-    }
-
-
-    
+    }   
 
 }
+*/
