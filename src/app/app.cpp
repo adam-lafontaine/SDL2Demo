@@ -144,17 +144,48 @@ namespace
 
 namespace
 {
+    // https://www.kenney.nl/
+    // https://pixabay.com/music/
+
     const auto LASER_SOUND_PATH = ASSETS_DIR / "laserLarge_000.ogg";
+    const auto RETRO_SOUND_PATH = ASSETS_DIR / "laserRetro_003.ogg";
+    const auto DOOR_SOUND_PATH = ASSETS_DIR / "doorOpen_000.ogg";
+    const auto FORCE_FIELD_SOUND_PATH = ASSETS_DIR / "forceField_000.ogg";
+    const auto MUSIC_PATH = ASSETS_DIR / "mellow-future-bass-bounce-on-it-184234.mp3";
 
 
-    bool load_laser_sound(Sound& sound)
+    inline bool load_sound(fs::path const& path, Sound& sound)
     {
-        if (!audio::load_sound_from_file(LASER_SOUND_PATH.string().c_str(), sound))
+        if (!audio::load_sound_from_file(path.string().c_str(), sound))
         {
             return false;
         }
 
         return true;
+    }
+
+
+    bool load_laser_sound(Sound& sound)
+    {
+        return load_sound(LASER_SOUND_PATH, sound);
+    }
+
+
+    bool load_retro_sound(Sound& sound)
+    {
+        return load_sound(RETRO_SOUND_PATH, sound);
+    }
+
+
+    bool load_door_sound(Sound& sound)
+    {
+        return load_sound(DOOR_SOUND_PATH, sound);
+    }
+
+
+    bool load_force_field_sound(Sound& sound)
+    {
+        return load_sound(FORCE_FIELD_SOUND_PATH, sound);
     }
 }
 
@@ -445,7 +476,7 @@ namespace sound
     class SoundState
     {
     public:
-        static constexpr u32 count = 1;
+        static constexpr u32 count = 4;
 
         union 
         {
@@ -454,6 +485,9 @@ namespace sound
             struct 
             {
                 State laser;
+                State retro;
+                State door;
+                State force_field;
             };
         };
 
@@ -693,6 +727,21 @@ namespace
             return false;
         }
 
+        if (!load_retro_sound(sounds.retro.sound))
+        {
+            return false;
+        }
+
+        if (!load_door_sound(sounds.door.sound))
+        {
+            return false;
+        }
+
+        if (!load_force_field_sound(sounds.force_field.sound))
+        {
+            return false;
+        }
+
         for (u32 i = 0; i < sounds.count; i++)
         {
             sounds.list[i].is_on = false;
@@ -827,10 +876,18 @@ namespace
 
     void update_sounds(sound::SoundState& sounds, input::Input const& input)
     {
-        if (input.keyboard.kbd_1.is_down && !sounds.laser.is_on)
+        auto const map_sound_input = [](auto const& btn, auto& sound)
         {
-            sounds.laser.is_on = true;
-        }
+            if (btn.is_down && !sound.is_on)
+            {
+                sound.is_on = true;
+            }
+        };
+
+        map_sound_input(input.keyboard.kbd_1, sounds.laser);
+        map_sound_input(input.keyboard.kbd_2, sounds.retro);
+        map_sound_input(input.keyboard.kbd_3, sounds.door);
+        map_sound_input(input.keyboard.kbd_4, sounds.force_field);
     }
 }
 
