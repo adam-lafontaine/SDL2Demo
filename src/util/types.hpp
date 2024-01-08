@@ -16,6 +16,7 @@ using f32 = float;
 using f64 = double;
 
 using b32 = u32;
+using b8 = u8;
 
 using cstr = const char*;
 

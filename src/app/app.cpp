@@ -494,8 +494,41 @@ namespace sound
                 Sound force_field;
             };
         };
-
     };
+
+
+    class Command
+    {
+    public:
+        static constexpr u32 count = SoundState::count;
+
+        union
+        {
+            b8 play[count] = { 0 };
+
+            struct
+            {
+                b8 play_laser;
+                b8 play_retro;
+                b8 play_door;
+                b8 play_force_field;
+            };
+        };
+    };
+
+
+    void play_sounds(Command const& cmd, SoundState& sounds)
+    {
+        static_assert(cmd.count == sounds.count);
+
+        for (u32 i = 0; i < cmd.count; i++)
+        {
+            if (cmd.play[i])
+            {
+                audio::play_sound(sounds.list[i]);
+            }
+        }
+    }
 }
 
 
@@ -917,21 +950,21 @@ namespace
     }
 
 
-    void update_sounds(sound::SoundState& sounds, input::Input const& input)
+    void update_sounds(input::Input const& input, sound::Command& cmd)
     {
-        // TODO: play here
-        auto const map_sound_input = [](auto const& btn, auto& sound)
+       
+        auto const map_sound_input = [](auto const& btn, b8& play)
         {
-            if (btn.pressed && !sound.is_on)
+            if (btn.pressed && !play)
             {
-                sound.is_on = true;
+                play = 1;
             }
         };
 
-        map_sound_input(input.keyboard.kbd_1, sounds.laser);
-        map_sound_input(input.keyboard.kbd_2, sounds.retro);
-        map_sound_input(input.keyboard.kbd_3, sounds.door);
-        map_sound_input(input.keyboard.kbd_4, sounds.force_field);
+        map_sound_input(input.keyboard.kbd_1, cmd.play_laser);
+        map_sound_input(input.keyboard.kbd_2, cmd.play_retro);
+        map_sound_input(input.keyboard.kbd_3, cmd.play_door);
+        map_sound_input(input.keyboard.kbd_4, cmd.play_force_field);
     }
 
 
@@ -1002,24 +1035,8 @@ namespace
         img::transform(filter.filter, state.screen_controller, filter::to_render_color);
     }
 
-
-    // TODO: delete
-    void play_audio(app::AudioState& audio)
-    {
-        //audio.master_volume = audio::set_volume(audio.master_volume);
-
-
-        auto& sounds = audio.sounds;
-        for (u32 i = 0; i < sounds.count; i++)
-        {
-            auto& sound = sounds.list[i];
-            if (sound.is_on)
-            {
-                audio::play_sound(sound);
-                sound.is_on = false;
-            }
-        }
-    }
+    
+    
 }
 
 
@@ -1069,13 +1086,16 @@ namespace app
             state_data.is_init = true;
         }
 
+        sound::Command sound_cmd{};
+
         update_key_colors(state_data.keyboard_filter, input);
         update_mouse_colors(state_data.mouse_filter, input);
         update_controller_colors(state_data.controller_filter, input);
-        update_mouse_coords(state_data.mouse_coords, input);
+        update_mouse_coords(state_data.mouse_coords, input);        
+
+        update_sounds(input, sound_cmd);
 
         update_audio_volume(state_data.audio, input);
-        update_sounds(state_data.audio.sounds, input);
         update_music(state_data.audio.music, input);
 
         img::fill(screen, state_data.background_color);
@@ -1083,7 +1103,7 @@ namespace app
         render_mouse(state_data);
         render_controller(state_data);
 
-        play_audio(state_data.audio);
+        sound::play_sounds(sound_cmd, state_data.audio.sounds);
     }
 
 
