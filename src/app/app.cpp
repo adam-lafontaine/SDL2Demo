@@ -549,6 +549,44 @@ namespace music
             };
         };
     };
+
+
+    class Command 
+    {
+    public:
+        static constexpr u32 count = MusicState::count;
+
+        union
+        {
+            b8 play[count] = { 0 };
+
+            struct 
+            {
+                b8 play_song;
+            };
+        };
+    };
+
+
+    void play_music(Command const& cmd, MusicState& music)
+    {
+        static_assert(cmd.count == music.count);
+
+        for (u32 i = 0; i < cmd.count; i++)
+        {
+            if (cmd.play[i])
+            {
+                if (music.list[i].is_on)
+                {
+                    audio::toggle_pause_music(music.list[i]);
+                }
+                else
+                {
+                    audio::play_music(music.list[i]);
+                }
+            }
+        }
+    }
 }
 
 
@@ -855,7 +893,7 @@ namespace
 }
 
 
-/* update */
+/* input */
 
 namespace
 {
@@ -950,9 +988,25 @@ namespace
     }
 
 
-    void update_sounds(input::Input const& input, sound::Command& cmd)
+    void update_music(music::MusicState& music, input::Input const& input)
     {
-       
+        if (input.keyboard.kbd_space.pressed)
+        {
+            if (music.song.is_on)
+            {
+                audio::toggle_pause_music(music.song);
+            }
+            else
+            {
+                audio::play_music(music.song);
+                music.song.is_on = true;
+            }
+        }
+    }
+
+
+    void read_sound_input(input::Input const& input, sound::Command& cmd)
+    {       
         auto const map_sound_input = [](auto const& btn, b8& play)
         {
             if (btn.pressed && !play)
@@ -968,20 +1022,22 @@ namespace
     }
 
 
-    void update_music(music::MusicState& music, input::Input const& input)
+    void read_music_input(input::Input const& input, music::Command& cmd)
     {
-        if (input.keyboard.kbd_space.pressed)
-        {
-            if (music.song.is_on)
-            {
-                audio::toggle_pause_music(music.song);
-            }
-            else
-            {
-                audio::play_music(music.song);
-                music.song.is_on = true;
-            }
-        }
+        //TODO
+    }
+
+
+    class AppCommand
+    {
+    public:
+        sound::Command sound;
+    };
+
+
+    void read_input(input::Input const& input, AppCommand& cmd)
+    {
+        read_sound_input(input, cmd.sound);
     }
 
 }
@@ -1086,14 +1142,14 @@ namespace app
             state_data.is_init = true;
         }
 
-        sound::Command sound_cmd{};
+        AppCommand cmd{};
 
         update_key_colors(state_data.keyboard_filter, input);
         update_mouse_colors(state_data.mouse_filter, input);
         update_controller_colors(state_data.controller_filter, input);
         update_mouse_coords(state_data.mouse_coords, input);        
 
-        update_sounds(input, sound_cmd);
+        read_input(input, cmd);
 
         update_audio_volume(state_data.audio, input);
         update_music(state_data.audio.music, input);
@@ -1103,7 +1159,7 @@ namespace app
         render_mouse(state_data);
         render_controller(state_data);
 
-        sound::play_sounds(sound_cmd, state_data.audio.sounds);
+        sound::play_sounds(cmd.sound, state_data.audio.sounds);
     }
 
 
