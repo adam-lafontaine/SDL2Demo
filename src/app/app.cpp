@@ -45,12 +45,22 @@ namespace
 
     
     template <typename T>
-    static f32 sign(T value)
+    static f32 sign_f32(T value)
     {
         if (!value)
             return 0.0f;
         
         return (f32)value < 0.0f ? -1.0f : 1.0f;
+    }
+
+
+    template <typename T>
+    static i8 sign_i8(T value)
+    {
+        if (!value)
+            return 0;
+        
+        return (f32)value < 0.0f ? -1 : 1;
     }
 }
 
@@ -202,7 +212,7 @@ namespace
 
 /* color table */
 
-namespace filter
+namespace
 {
     constexpr auto WHITE = img::to_pixel(255, 255, 255);
     constexpr auto BLACK = img::to_pixel(0, 0, 0);
@@ -261,7 +271,7 @@ namespace filter
 }
 
 
-namespace filter
+namespace
 {
     class SubFilter
     {
@@ -271,7 +281,7 @@ namespace filter
     };
 
     
-    class KeyboardFilter
+    class UIKeyboard
     {
     public:
         GrayView filter;
@@ -294,6 +304,32 @@ namespace filter
                 SubFilter key_d;
                 SubFilter key_space;
             };            
+        };
+
+    };
+
+
+    class UIKeyboardCommand
+    {
+    public:
+        static constexpr u32 count = UIKeyboard::count;
+
+        union
+        {
+            b8 keys_on[count] = { 0 };
+
+            struct
+            {
+                b8 key_1_on;
+                b8 key_2_on;
+                b8 key_3_on;
+                b8 key_4_on;
+                b8 key_w_on;
+                b8 key_a_on;
+                b8 key_s_on;
+                b8 key_d_on;
+                b8 key_space_on;
+            };
         };
 
     };
@@ -367,7 +403,14 @@ namespace filter
     };
 
 
-    static void make_keyboard_filter(KeyboardFilter& keyboard)
+    class UICommand
+    {
+    public:
+        UIKeyboardCommand keyboard;
+    };
+
+
+    static void make_keyboard_filter(UIKeyboard& keyboard)
     {
         auto& view = keyboard.filter;
         
@@ -437,7 +480,7 @@ namespace filter
             characters[i].view = img::sub_view(view, to_rect(x, 0, width, view.height));
             characters[i].color_id = 1; // BLACK
 
-            img::fill_if(characters[i].view, characters[i].color_id, filter::can_set_color_id);
+            img::fill_if(characters[i].view, characters[i].color_id, can_set_color_id);
 
             x += width;
         }
@@ -467,7 +510,7 @@ namespace filter
             
             auto dst_view = img::sub_view(dst, dst_rect);
 
-            img::transform(char_view, dst_view, filter::to_render_color);            
+            img::transform(char_view, dst_view, to_render_color);            
 
             dst_rect.x_begin = dst_rect.x_end;
         }
@@ -475,7 +518,9 @@ namespace filter
 }
 
 
-namespace sound
+/* audio */
+
+namespace
 {
     class SoundState
     {
@@ -497,7 +542,7 @@ namespace sound
     };
 
 
-    class Command
+    class SoundCommand
     {
     public:
         static constexpr u32 count = SoundState::count;
@@ -515,25 +560,8 @@ namespace sound
             };
         };
     };
+    
 
-
-    void play_sounds(Command const& cmd, SoundState& sounds)
-    {
-        static_assert(cmd.count == sounds.count);
-
-        for (u32 i = 0; i < cmd.count; i++)
-        {
-            if (cmd.play[i])
-            {
-                audio::play_sound(sounds.list[i]);
-            }
-        }
-    }
-}
-
-
-namespace music
-{
     class MusicState
     {
     public:
@@ -551,7 +579,7 @@ namespace music
     };
 
 
-    class Command 
+    class MusicCommand 
     {
     public:
         static constexpr u32 count = MusicState::count;
@@ -568,27 +596,20 @@ namespace music
     };
 
 
-    void play_music(Command const& cmd, MusicState& music)
+    class AudioCommand
     {
-        static_assert(cmd.count == music.count);
+    public:
 
-        for (u32 i = 0; i < cmd.count; i++)
-        {
-            if (cmd.play[i])
-            {
-                if (music.list[i].is_on)
-                {
-                    audio::toggle_pause_music(music.list[i]);
-                }
-                else
-                {
-                    audio::play_music(music.list[i]);
-                }
-            }
-        }
-    }
+        i8 master_volume_adj = 0;
+
+        SoundCommand sound;
+        MusicCommand music;
+
+    };
 }
 
+
+/* state */
 
 namespace app
 {
@@ -599,8 +620,8 @@ namespace app
     public:
         f32 master_volume;
 
-        sound::SoundState sounds;
-        music::MusicState music;        
+        SoundState sounds;
+        MusicState music;        
     };
 
 
@@ -624,10 +645,10 @@ namespace app
 
         Pixel background_color;
         
-        filter::KeyboardFilter keyboard_filter;        
-        filter::MouseFilter mouse_filter;
-        filter::ControllerFilter controller_filter;
-        filter::AsciiFilter ascii_filter;
+        UIKeyboard keyboard_filter;        
+        MouseFilter mouse_filter;
+        ControllerFilter controller_filter;
+        AsciiFilter ascii_filter;
 
         sv::StringView mouse_coords;
         
@@ -674,51 +695,51 @@ namespace app
 
 namespace
 {
-    void init_keyboard_filter(filter::KeyboardFilter& filter, Image const& raw_keyboard, Buffer8& buffer)
+    void init_keyboard_filter(UIKeyboard& filter, Image const& raw_keyboard, Buffer8& buffer)
     {
         auto const width = raw_keyboard.width;
         auto const height = raw_keyboard.height;
 
         filter.filter = img::make_view(width, height, buffer);
-        img::transform(img::make_view(raw_keyboard), filter.filter, filter::to_filter_color_id);
+        img::transform(img::make_view(raw_keyboard), filter.filter, to_filter_color_id);
 
-        filter::make_keyboard_filter(filter);
+        make_keyboard_filter(filter);
     }
 
 
-    void init_mouse_filter(filter::MouseFilter& filter, Image const& raw_mouse, Buffer8& buffer)
+    void init_mouse_filter(MouseFilter& filter, Image const& raw_mouse, Buffer8& buffer)
     {
         auto const width = raw_mouse.width;
         auto const height = raw_mouse.height;
 
         filter.filter = img::make_view(width, height, buffer);
-        img::transform(img::make_view(raw_mouse), filter.filter, filter::to_filter_color_id);
+        img::transform(img::make_view(raw_mouse), filter.filter, to_filter_color_id);
 
-        filter::make_mouse_filter(filter);
+        make_mouse_filter(filter);
     }
 
 
-    void init_controller_filter(filter::ControllerFilter& filter, Image const& raw_controller, Buffer8& buffer)
+    void init_controller_filter(ControllerFilter& filter, Image const& raw_controller, Buffer8& buffer)
     {
         auto const width = raw_controller.width;
         auto const height = raw_controller.height;
 
         filter.filter = img::make_view(width, height, buffer);
-        img::transform(img::make_view(raw_controller), filter.filter, filter::to_filter_color_id);
+        img::transform(img::make_view(raw_controller), filter.filter, to_filter_color_id);
 
-        filter::make_controller_filter(filter);
+        make_controller_filter(filter);
     }
 
 
-    void init_ascii_filter(filter::AsciiFilter& filter, Image const& raw_ascii, u32 scale, Buffer8& buffer)
+    void init_ascii_filter(AsciiFilter& filter, Image const& raw_ascii, u32 scale, Buffer8& buffer)
     {
         auto const width = raw_ascii.width * scale;
         auto const height = raw_ascii.height * scale;
 
         filter.filter = img::make_view(width, height, buffer);
-        img::transform_scale_up(img::make_view(raw_ascii), filter.filter, scale, filter::to_filter_color_id);
+        img::transform_scale_up(img::make_view(raw_ascii), filter.filter, scale, to_filter_color_id);
 
-        filter::make_ascii_filter(filter, scale);
+        make_ascii_filter(filter, scale);
     }
 
 
@@ -897,10 +918,10 @@ namespace
 
 namespace
 {
-    void update_key_colors(filter::KeyboardFilter& keyboard, input::Input const& input)
+    void update_key_colors(UIKeyboard& keyboard, input::Input const& input)
     {
-        constexpr auto key_on = filter::ID_RED;
-        constexpr auto key_off = filter::ID_BLUE;
+        constexpr auto key_on = ID_RED;
+        constexpr auto key_off = ID_BLUE;
 
         keyboard.key_1.color_id = input.keyboard.kbd_1.is_down ? key_on : key_off;
         keyboard.key_2.color_id = input.keyboard.kbd_2.is_down ? key_on : key_off;
@@ -911,13 +932,13 @@ namespace
         keyboard.key_s.color_id = input.keyboard.kbd_S.is_down ? key_on : key_off;
         keyboard.key_d.color_id = input.keyboard.kbd_D.is_down ? key_on : key_off;
         keyboard.key_space.color_id = input.keyboard.kbd_space.is_down ? key_on : key_off;
-    } 
+    }
 
 
-    void update_mouse_colors(filter::MouseFilter& buttons, input::Input const& input)
+    void update_mouse_colors(MouseFilter& buttons, input::Input const& input)
     {
-        constexpr auto btn_on = filter::ID_RED;
-        constexpr auto btn_off = filter::ID_BLUE;
+        constexpr auto btn_on = ID_RED;
+        constexpr auto btn_off = ID_BLUE;
 
         buttons.btn_left.color_id = input.mouse.btn_left.is_down ? btn_on : btn_off;
         buttons.btn_right.color_id = input.mouse.btn_right.is_down ? btn_on : btn_off;
@@ -925,10 +946,10 @@ namespace
     }
 
 
-    void update_controller_colors(filter::ControllerFilter& buttons, input::Input const& input)
+    void update_controller_colors(ControllerFilter& buttons, input::Input const& input)
     {
-        constexpr auto btn_on = filter::ID_RED;
-        constexpr auto btn_off = filter::ID_BLUE;
+        constexpr auto btn_on = ID_RED;
+        constexpr auto btn_off = ID_BLUE;
 
         buttons.btn_dpad_up.color_id = input.controller.btn_dpad_up.is_down ? btn_on : btn_off;
         buttons.btn_dpad_down.color_id = input.controller.btn_dpad_down.is_down ? btn_on : btn_off;
@@ -972,42 +993,35 @@ namespace
         coords.length = std::strlen(coords.data_);
     }
 
-
-    void update_audio_volume(app::AudioState& state, input::Input const& input)
-    {
-        constexpr f32 delta = 0.02;
-
-        auto adj = sign(input.mouse.wheel.y);
-
-        if (!adj)
-        {
-            return;
-        }
-
-        state.master_volume = audio::set_master_volume(state.master_volume + adj * delta);
-    }
-
-
-    void update_music(music::MusicState& music, input::Input const& input)
-    {
-        if (input.keyboard.kbd_space.pressed)
-        {
-            if (music.song.is_on)
-            {
-                audio::toggle_pause_music(music.song);
-            }
-            else
-            {
-                audio::play_music(music.song);
-                music.song.is_on = true;
-            }
-        }
-    }
-
-
-    void read_sound_input(input::Input const& input, sound::Command& cmd)
+    
+    void read_ui_keyboard_input(input::Input const& input, UIKeyboardCommand& cmd)
     {       
-        auto const map_sound_input = [](auto const& btn, b8& play)
+        auto const map_input = [](auto const& btn, b8& is_on)
+        {
+            is_on = (b8)btn.is_down;
+        };
+
+        map_input(input.keyboard.kbd_1, cmd.key_1_on);
+        map_input(input.keyboard.kbd_2, cmd.key_2_on);
+        map_input(input.keyboard.kbd_3, cmd.key_3_on);
+        map_input(input.keyboard.kbd_4, cmd.key_4_on);
+        map_input(input.keyboard.kbd_W, cmd.key_w_on);
+        map_input(input.keyboard.kbd_A, cmd.key_a_on);
+        map_input(input.keyboard.kbd_S, cmd.key_s_on);
+        map_input(input.keyboard.kbd_D, cmd.key_d_on);
+        map_input(input.keyboard.kbd_space, cmd.key_space_on);
+    }
+
+
+    void read_audio_volume(input::Input const& input, AudioCommand& cmd)
+    {
+        cmd.master_volume_adj = sign_i8(input.mouse.wheel.y);
+    }
+
+
+    void read_sound_input(input::Input const& input, SoundCommand& cmd)
+    {       
+        auto const map_input = [](auto const& btn, b8& play)
         {
             if (btn.pressed && !play)
             {
@@ -1015,29 +1029,38 @@ namespace
             }
         };
 
-        map_sound_input(input.keyboard.kbd_1, cmd.play_laser);
-        map_sound_input(input.keyboard.kbd_2, cmd.play_retro);
-        map_sound_input(input.keyboard.kbd_3, cmd.play_door);
-        map_sound_input(input.keyboard.kbd_4, cmd.play_force_field);
+        map_input(input.keyboard.kbd_1, cmd.play_laser);
+        map_input(input.keyboard.kbd_2, cmd.play_retro);
+        map_input(input.keyboard.kbd_3, cmd.play_door);
+        map_input(input.keyboard.kbd_4, cmd.play_force_field);
     }
 
 
-    void read_music_input(input::Input const& input, music::Command& cmd)
+    void read_music_input(input::Input const& input, MusicCommand& cmd)
     {
-        //TODO
+        if (input.keyboard.kbd_space.pressed)
+        {
+            cmd.play_song = 1;
+        }
     }
 
 
     class AppCommand
     {
     public:
-        sound::Command sound;
+        AudioCommand audio;
+
+        UICommand ui;
     };
 
 
     void read_input(input::Input const& input, AppCommand& cmd)
     {
-        read_sound_input(input, cmd.sound);
+        read_ui_keyboard_input(input, cmd.ui.keyboard);
+
+        read_audio_volume(input, cmd.audio);
+        read_sound_input(input, cmd.audio.sound);
+        read_music_input(input, cmd.audio.music);
     }
 
 }
@@ -1047,17 +1070,22 @@ namespace
 
 namespace
 {
-    void render_keyboard(app::StateData const& state)
+    void render_keyboard(AppCommand const& command, app::StateData const& state)
     {
-        auto& filter = state.keyboard_filter;
-        auto& keys = filter.keys;
-        
-        for (u32 i = 0; i < filter.count; i++)
+        constexpr auto key_on = ID_RED;
+        constexpr auto key_off = ID_BLUE;
+
+        auto& cmd = command.ui.keyboard;
+        auto& ui = state.keyboard_filter;
+        static_assert(cmd.count == ui.count);
+
+        for (u32 i = 0; i < cmd.count; i++)
         {
-            img::fill_if(keys[i].view, keys[i].color_id, filter::can_set_color_id);
+            auto color_id = cmd.keys_on[i] ? key_on : key_off;
+            img::fill_if(ui.keys[i].view, color_id, can_set_color_id);
         }
 
-        img::transform(filter.filter, state.screen_keyboard, filter::to_render_color);
+        img::transform(ui.filter, state.screen_keyboard, to_render_color);
     }
 
 
@@ -1068,13 +1096,13 @@ namespace
 
         for (u32 i = 0; i < filter.count; i++)
         {
-            img::fill_if(buttons[i].view, buttons[i].color_id, filter::can_set_color_id);
+            img::fill_if(buttons[i].view, buttons[i].color_id, can_set_color_id);
         }
 
-        img::transform(filter.filter, state.screen_mouse, filter::to_render_color);
+        img::transform(filter.filter, state.screen_mouse, to_render_color);
 
         //img::fill(state.screen_mouse_coords, img::to_pixel(0, 128, 0));
-        filter::write_to_view(state.ascii_filter, state.mouse_coords, state.screen_mouse_coords);
+        write_to_view(state.ascii_filter, state.mouse_coords, state.screen_mouse_coords);
     }
 
 
@@ -1085,14 +1113,89 @@ namespace
 
         for (u32 i = 0; i < filter.count; i++)
         {
-            img::fill_if(buttons[i].view, buttons[i].color_id, filter::can_set_color_id);
+            img::fill_if(buttons[i].view, buttons[i].color_id, can_set_color_id);
         }
 
-        img::transform(filter.filter, state.screen_controller, filter::to_render_color);
+        img::transform(filter.filter, state.screen_controller, to_render_color);
     }
 
     
     
+
+
+    void set_audio_volume(AppCommand const& command, app::StateData& state)
+    {
+        auto& cmd = command.audio;
+
+        if (!cmd.master_volume_adj)
+        {
+            return;
+        }
+
+        auto& audio = state.audio;
+
+        constexpr f32 delta = 0.02;
+
+        auto adj_f32 = delta * cmd.master_volume_adj;
+
+        audio.master_volume = audio::set_master_volume(audio.master_volume + adj_f32);
+    }
+
+
+    void play_sounds(AppCommand const& command, app::StateData& state)
+    {
+        auto& cmd = command.audio.sound;
+        auto& sounds = state.audio.sounds;
+        static_assert(cmd.count == sounds.count);
+
+        for (u32 i = 0; i < cmd.count; i++)
+        {
+            if (cmd.play[i])
+            {
+                audio::play_sound(sounds.list[i]);
+            }
+        }
+    }
+
+
+    void play_music(AppCommand const& command, app::StateData& state)
+    {
+        auto& cmd = command.audio.music;
+        auto& music = state.audio.music;
+        static_assert(cmd.count == music.count);
+
+        for (u32 i = 0; i < cmd.count; i++)
+        {
+            if (cmd.play[i])
+            {
+                if (music.list[i].is_on)
+                {
+                    audio::toggle_pause_music(music.list[i]);
+                }
+                else
+                {
+                    audio::play_music(music.list[i]);
+                }
+            }
+        }
+    }
+
+
+    void update_ui(AppCommand const& cmd, app::StateData& state)
+    {
+        
+        render_keyboard(cmd, state);
+        render_mouse(state);
+        render_controller(state);
+    }
+
+
+    void update_audio(AppCommand const& cmd, app::StateData& state)
+    {
+        set_audio_volume(cmd, state);
+        play_sounds(cmd, state);
+        play_music(cmd, state);
+    }
 }
 
 
@@ -1144,22 +1247,20 @@ namespace app
 
         AppCommand cmd{};
 
+        read_input(input, cmd);
+
         update_key_colors(state_data.keyboard_filter, input);
         update_mouse_colors(state_data.mouse_filter, input);
         update_controller_colors(state_data.controller_filter, input);
         update_mouse_coords(state_data.mouse_coords, input);        
 
-        read_input(input, cmd);
-
-        update_audio_volume(state_data.audio, input);
-        update_music(state_data.audio.music, input);
+        
 
         img::fill(screen, state_data.background_color);
-        render_keyboard(state_data);
-        render_mouse(state_data);
-        render_controller(state_data);
 
-        sound::play_sounds(cmd.sound, state_data.audio.sounds);
+        update_ui(cmd, state_data);
+
+        update_audio(cmd, state_data);
     }
 
 
