@@ -232,6 +232,9 @@ namespace
 
 
     // TODO: enum
+    constexpr u8 ID_TRANSPARENT = 0;
+    constexpr u8 ID_BLACK = 1;
+    constexpr u8 ID_WHITE = 2;
     constexpr u8 ID_BLUE = 3;
     constexpr u8 ID_RED = 4;    
 
@@ -240,15 +243,15 @@ namespace
     {
         if (p.alpha == 0)
         {
-            return 0; // TRANSPARENT
+            return ID_TRANSPARENT;
         }
 
         if (p.red == 0 && p.green == 0 && p.blue == 0)
         {
-            return 1; // BLACK
+            return ID_BLACK;
         }
 
-        return 2; // WHITE
+        return ID_WHITE;
     }
 
 
@@ -273,15 +276,10 @@ namespace
 
 namespace
 {
-    class SubFilter
-    {
-    public:
-        GraySubView view;
-        u8 color_id;
-    };
+    using SubFilter = GraySubView;
 
     
-    class UIKeyboard
+    class UIKeyboardFilter
     {
     public:
         GrayView filter;
@@ -312,7 +310,7 @@ namespace
     class UIKeyboardCommand
     {
     public:
-        static constexpr u32 count = UIKeyboard::count;
+        static constexpr u32 count = UIKeyboardFilter::count;
 
         union
         {
@@ -335,11 +333,10 @@ namespace
     };
 
 
-    class MouseFilter
+    class UIMouseFilter
     {
     public:
         GrayView filter;
-
 
         static constexpr u32 count = 3;
 
@@ -357,11 +354,31 @@ namespace
     };
 
 
-    class ControllerFilter
+    class UIMouseCommand
+    {
+    public:
+
+        static constexpr u32 count = UIMouseFilter::count;
+
+        union
+        {
+            b8 btns_on[count] = { 0 };
+
+            struct
+            {
+                b8 btn_left_on;
+                b8 btn_middle_on;
+                b8 btn_right_on;
+            };
+        };
+
+    };
+
+
+    class UIController
     {
     public:
         GrayView filter;
-
 
         static constexpr u32 count = 16;
 
@@ -392,6 +409,38 @@ namespace
     };
 
 
+    class UIControllerCommand
+    {
+    public:
+        static constexpr u32 count = UIController::count;
+
+        union
+        {
+            b8 btns_on[count] = { 0 };
+
+            struct
+            {
+                b8 btn_dpad_up_on;
+                b8 btn_dpad_down_on;
+                b8 btn_dpad_left_on;
+                b8 btn_dpad_right_on;
+                b8 btn_a_on;
+                b8 btn_b_on;
+                b8 btn_x_on;
+                b8 btn_y_on;
+                b8 btn_start_on;
+                b8 btn_back_on;
+                b8 btn_sh_left_on;
+                b8 btn_sh_right_on;
+                b8 btn_tr_left_on;
+                b8 btn_tr_right_on;
+                b8 btn_st_left_on;
+                b8 btn_st_right_on;
+            };
+        };
+    };
+
+
     class AsciiFilter
     {
     public:
@@ -407,59 +456,61 @@ namespace
     {
     public:
         UIKeyboardCommand keyboard;
+        UIMouseCommand mouse;
+        UIControllerCommand controller;
     };
 
 
-    static void make_keyboard_filter(UIKeyboard& keyboard)
+    static void make_keyboard_filter(UIKeyboardFilter& keyboard)
     {
         auto& view = keyboard.filter;
         
-        keyboard.key_1.view = img::sub_view(view, to_rect(21,  3, 14, 14));
-        keyboard.key_2.view = img::sub_view(view, to_rect(39,  3, 14, 14));
-        keyboard.key_3.view = img::sub_view(view, to_rect(57,  3, 14, 14));
-        keyboard.key_4.view = img::sub_view(view, to_rect(75,  3, 14, 14));
-        keyboard.key_w.view = img::sub_view(view, to_rect(48, 21, 14, 14));
-        keyboard.key_a.view = img::sub_view(view, to_rect(35, 39, 14, 14));
-        keyboard.key_s.view = img::sub_view(view, to_rect(53, 39, 14, 14));
-        keyboard.key_d.view = img::sub_view(view, to_rect(71, 39, 14, 14));
-        keyboard.key_space.view = img::sub_view(view, to_rect(84, 75, 104, 14));
+        keyboard.key_1 = img::sub_view(view, to_rect(21,  3, 14, 14));
+        keyboard.key_2 = img::sub_view(view, to_rect(39,  3, 14, 14));
+        keyboard.key_3 = img::sub_view(view, to_rect(57,  3, 14, 14));
+        keyboard.key_4 = img::sub_view(view, to_rect(75,  3, 14, 14));
+        keyboard.key_w = img::sub_view(view, to_rect(48, 21, 14, 14));
+        keyboard.key_a = img::sub_view(view, to_rect(35, 39, 14, 14));
+        keyboard.key_s = img::sub_view(view, to_rect(53, 39, 14, 14));
+        keyboard.key_d = img::sub_view(view, to_rect(71, 39, 14, 14));
+        keyboard.key_space = img::sub_view(view, to_rect(84, 75, 104, 14));
     }
 
 
-    static void make_mouse_filter(MouseFilter& mouse)
+    static void make_mouse_filter(UIMouseFilter& mouse)
     {
         auto& view = mouse.filter;
 
-        mouse.btn_left.view   = img::sub_view(view, to_rect( 2, 2, 28, 29));
-        mouse.btn_middle.view = img::sub_view(view, to_rect(34, 2, 12, 29));
-        mouse.btn_right.view  = img::sub_view(view, to_rect(50, 2, 28, 29));
+        mouse.btn_left   = img::sub_view(view, to_rect( 2, 2, 28, 29));
+        mouse.btn_middle = img::sub_view(view, to_rect(34, 2, 12, 29));
+        mouse.btn_right  = img::sub_view(view, to_rect(50, 2, 28, 29));
     }
 
 
-    static void make_controller_filter(ControllerFilter& controller)
+    static void make_controller_filter(UIController& controller)
     {
         auto& view = controller.filter;
 
-        controller.btn_dpad_up   .view = img::sub_view(view, to_rect(22, 33,  9, 16));
-        controller.btn_dpad_down .view = img::sub_view(view, to_rect(22, 60,  9, 16));
-        controller.btn_dpad_left .view = img::sub_view(view, to_rect( 5, 50, 16,  9));
-        controller.btn_dpad_right.view = img::sub_view(view, to_rect(32, 50, 16,  9));
+        controller.btn_dpad_up    = img::sub_view(view, to_rect(22, 33,  9, 16));
+        controller.btn_dpad_down  = img::sub_view(view, to_rect(22, 60,  9, 16));
+        controller.btn_dpad_left  = img::sub_view(view, to_rect( 5, 50, 16,  9));
+        controller.btn_dpad_right = img::sub_view(view, to_rect(32, 50, 16,  9));
 
-        controller.btn_a.view = img::sub_view(view, to_rect(159, 63, 13, 13));
-        controller.btn_b.view = img::sub_view(view, to_rect(174, 48, 13, 13));
-        controller.btn_x.view = img::sub_view(view, to_rect(144, 48, 13, 13));
-        controller.btn_y.view = img::sub_view(view, to_rect(159, 33, 13, 13));
+        controller.btn_a = img::sub_view(view, to_rect(159, 63, 13, 13));
+        controller.btn_b = img::sub_view(view, to_rect(174, 48, 13, 13));
+        controller.btn_x = img::sub_view(view, to_rect(144, 48, 13, 13));
+        controller.btn_y = img::sub_view(view, to_rect(159, 33, 13, 13));
 
-        controller.btn_start.view = img::sub_view(view, to_rect(103, 24, 14, 7));
-        controller.btn_back .view = img::sub_view(view, to_rect( 75, 24, 14, 7));
+        controller.btn_start = img::sub_view(view, to_rect(103, 24, 14, 7));
+        controller.btn_back  = img::sub_view(view, to_rect( 75, 24, 14, 7));
 
-        controller.btn_sh_left .view = img::sub_view(view, to_rect( 18, 22, 17,  7));
-        controller.btn_sh_right.view = img::sub_view(view, to_rect(157, 22, 17, 7));
-        controller.btn_tr_left .view = img::sub_view(view, to_rect( 18,  5, 17, 13));
-        controller.btn_tr_right.view = img::sub_view(view, to_rect(157,  5, 17, 13));
+        controller.btn_sh_left  = img::sub_view(view, to_rect( 18, 22, 17,  7));
+        controller.btn_sh_right = img::sub_view(view, to_rect(157, 22, 17, 7));
+        controller.btn_tr_left  = img::sub_view(view, to_rect( 18,  5, 17, 13));
+        controller.btn_tr_right = img::sub_view(view, to_rect(157,  5, 17, 13));
 
-        controller.btn_st_left .view = img::sub_view(view, to_rect( 60, 45, 23, 23));
-        controller.btn_st_right.view = img::sub_view(view, to_rect(109, 45, 23, 23));
+        controller.btn_st_left  = img::sub_view(view, to_rect( 60, 45, 23, 23));
+        controller.btn_st_right = img::sub_view(view, to_rect(109, 45, 23, 23));
     }
 
 
@@ -477,10 +528,9 @@ namespace
         for (u32 i = 0; i < ascii.count; i++)
         {
             auto width = char_length[i] * scale;
-            characters[i].view = img::sub_view(view, to_rect(x, 0, width, view.height));
-            characters[i].color_id = 1; // BLACK
+            characters[i] = img::sub_view(view, to_rect(x, 0, width, view.height));
 
-            img::fill_if(characters[i].view, characters[i].color_id, can_set_color_id);
+            img::fill_if(characters[i], ID_BLACK, can_set_color_id);
 
             x += width;
         }
@@ -495,7 +545,7 @@ namespace
 
         for (u32 i = 0; i < src.length && dst_rect.x_end < dst.width; i++)
         {
-            auto character = filter.characters[src.data_[i] - ' '].view;
+            auto character = filter.characters[src.data_[i] - ' '];
 
             auto char_width = character.width;
 
@@ -645,9 +695,9 @@ namespace app
 
         Pixel background_color;
         
-        UIKeyboard keyboard_filter;        
-        MouseFilter mouse_filter;
-        ControllerFilter controller_filter;
+        UIKeyboardFilter keyboard_filter;        
+        UIMouseFilter mouse_filter;
+        UIController controller_filter;
         AsciiFilter ascii_filter;
 
         sv::StringView mouse_coords;
@@ -695,7 +745,7 @@ namespace app
 
 namespace
 {
-    void init_keyboard_filter(UIKeyboard& filter, Image const& raw_keyboard, Buffer8& buffer)
+    void init_keyboard_filter(UIKeyboardFilter& filter, Image const& raw_keyboard, Buffer8& buffer)
     {
         auto const width = raw_keyboard.width;
         auto const height = raw_keyboard.height;
@@ -707,7 +757,7 @@ namespace
     }
 
 
-    void init_mouse_filter(MouseFilter& filter, Image const& raw_mouse, Buffer8& buffer)
+    void init_mouse_filter(UIMouseFilter& filter, Image const& raw_mouse, Buffer8& buffer)
     {
         auto const width = raw_mouse.width;
         auto const height = raw_mouse.height;
@@ -719,7 +769,7 @@ namespace
     }
 
 
-    void init_controller_filter(ControllerFilter& filter, Image const& raw_controller, Buffer8& buffer)
+    void init_controller_filter(UIController& filter, Image const& raw_controller, Buffer8& buffer)
     {
         auto const width = raw_controller.width;
         auto const height = raw_controller.height;
@@ -917,83 +967,7 @@ namespace
 /* input */
 
 namespace
-{
-    void update_key_colors(UIKeyboard& keyboard, input::Input const& input)
-    {
-        constexpr auto key_on = ID_RED;
-        constexpr auto key_off = ID_BLUE;
-
-        keyboard.key_1.color_id = input.keyboard.kbd_1.is_down ? key_on : key_off;
-        keyboard.key_2.color_id = input.keyboard.kbd_2.is_down ? key_on : key_off;
-        keyboard.key_3.color_id = input.keyboard.kbd_3.is_down ? key_on : key_off;
-        keyboard.key_4.color_id = input.keyboard.kbd_4.is_down ? key_on : key_off;
-        keyboard.key_w.color_id = input.keyboard.kbd_W.is_down ? key_on : key_off;
-        keyboard.key_a.color_id = input.keyboard.kbd_A.is_down ? key_on : key_off;
-        keyboard.key_s.color_id = input.keyboard.kbd_S.is_down ? key_on : key_off;
-        keyboard.key_d.color_id = input.keyboard.kbd_D.is_down ? key_on : key_off;
-        keyboard.key_space.color_id = input.keyboard.kbd_space.is_down ? key_on : key_off;
-    }
-
-
-    void update_mouse_colors(MouseFilter& buttons, input::Input const& input)
-    {
-        constexpr auto btn_on = ID_RED;
-        constexpr auto btn_off = ID_BLUE;
-
-        buttons.btn_left.color_id = input.mouse.btn_left.is_down ? btn_on : btn_off;
-        buttons.btn_right.color_id = input.mouse.btn_right.is_down ? btn_on : btn_off;
-        buttons.btn_middle.color_id = (input.mouse.btn_middle. is_down || input.mouse.wheel.y != 0) ? btn_on : btn_off;
-    }
-
-
-    void update_controller_colors(ControllerFilter& buttons, input::Input const& input)
-    {
-        constexpr auto btn_on = ID_RED;
-        constexpr auto btn_off = ID_BLUE;
-
-        buttons.btn_dpad_up.color_id = input.controller.btn_dpad_up.is_down ? btn_on : btn_off;
-        buttons.btn_dpad_down.color_id = input.controller.btn_dpad_down.is_down ? btn_on : btn_off;
-        buttons.btn_dpad_left.color_id = input.controller.btn_dpad_left.is_down ? btn_on : btn_off;
-        buttons.btn_dpad_right.color_id = input.controller.btn_dpad_right.is_down ? btn_on : btn_off;
-
-        buttons.btn_a.color_id = input.controller.btn_a.is_down ? btn_on : btn_off;
-        buttons.btn_b.color_id = input.controller.btn_b.is_down ? btn_on : btn_off;
-        buttons.btn_x.color_id = input.controller.btn_x.is_down ? btn_on : btn_off;
-        buttons.btn_y.color_id = input.controller.btn_y.is_down ? btn_on : btn_off;
-
-        buttons.btn_start.color_id = input.controller.btn_start.is_down ? btn_on : btn_off;
-        buttons.btn_back.color_id = input.controller.btn_back.is_down ? btn_on : btn_off;
-
-        buttons.btn_sh_left.color_id = input.controller.btn_shoulder_left.is_down ? btn_on : btn_off;
-        buttons.btn_sh_right.color_id = input.controller.btn_shoulder_right.is_down ? btn_on : btn_off;
-
-        buttons.btn_tr_left.color_id = input.controller.trigger_left > 0.0f ? btn_on : btn_off;
-        buttons.btn_tr_right.color_id = input.controller.trigger_right > 0.0f ? btn_on : btn_off;
-
-        buttons.btn_st_left.color_id = 
-            input.controller.stick_left.magnitude > 0.3f ||
-            input.controller.btn_stick_left.is_down            
-            ? btn_on : btn_off;
-        
-        buttons.btn_st_right.color_id = 
-            input.controller.stick_right.magnitude > 0.3f ||
-            input.controller.btn_stick_right.is_down            
-            ? btn_on : btn_off;
-    }
-
-
-    void update_mouse_coords(sv::StringView& coords, input::Input const& input)
-    {
-        auto mouse_pos = input.mouse.window_pos;
-
-        sv::zero_view(coords);
-
-        qsnprintf(coords.data_, coords.capacity, "(%d, %d)", mouse_pos.x, mouse_pos.y);
-
-        coords.length = std::strlen(coords.data_);
-    }
-
-    
+{    
     void read_ui_keyboard_input(input::Input const& input, UIKeyboardCommand& cmd)
     {       
         auto const map_input = [](auto const& btn, b8& is_on)
@@ -1010,6 +984,56 @@ namespace
         map_input(input.keyboard.kbd_S, cmd.key_s_on);
         map_input(input.keyboard.kbd_D, cmd.key_d_on);
         map_input(input.keyboard.kbd_space, cmd.key_space_on);
+    }
+
+
+    void read_ui_mouse_input(input::Input const& input, UIMouseCommand& cmd)
+    {
+        auto& mouse = input.mouse;
+
+        cmd.btn_left_on = mouse.btn_left.is_down;
+        cmd.btn_right_on = mouse.btn_right.is_down;
+        cmd.btn_middle_on = mouse.btn_middle.is_down || mouse.wheel.y != 0;
+    }
+
+
+    void read_ui_controller_input(input::Input const& input, UIControllerCommand& cmd)
+    {
+        auto& controller = input.controller;
+
+        auto const map_input = [](auto const& btn, b8& is_on)
+        {
+            is_on = (b8)btn.is_down;
+        };
+
+        map_input(controller.btn_dpad_up, cmd.btn_dpad_up_on);
+        map_input(controller.btn_dpad_down, cmd.btn_dpad_down_on);
+        map_input(controller.btn_dpad_left, cmd.btn_dpad_left_on);
+        map_input(controller.btn_dpad_right, cmd.btn_dpad_right_on);
+
+        map_input(controller.btn_a, cmd.btn_a_on);
+        map_input(controller.btn_b, cmd.btn_b_on);
+        map_input(controller.btn_x, cmd.btn_x_on);
+        map_input(controller.btn_y, cmd.btn_y_on);
+
+        map_input(controller.btn_start, cmd.btn_start_on);
+        map_input(controller.btn_back, cmd.btn_back_on);
+
+        map_input(controller.btn_shoulder_left, cmd.btn_sh_left_on);
+        map_input(controller.btn_shoulder_right, cmd.btn_sh_right_on);
+
+        cmd.btn_tr_left_on = (b8)(input.controller.trigger_left > 0.0f);
+        cmd.btn_tr_right_on = (b8)(input.controller.trigger_right > 0.0f);
+
+        cmd.btn_st_left_on = (b8)(
+            input.controller.stick_left.magnitude > 0.3f ||
+            input.controller.btn_stick_left.is_down
+        );
+
+        cmd.btn_st_right_on = (b8)(
+            input.controller.stick_right.magnitude > 0.3f ||
+            input.controller.btn_stick_right.is_down
+        );
     }
 
 
@@ -1054,13 +1078,27 @@ namespace
     };
 
 
-    void read_input(input::Input const& input, AppCommand& cmd)
+    void read_input_commands(input::Input const& input, AppCommand& cmd)
     {
         read_ui_keyboard_input(input, cmd.ui.keyboard);
+        read_ui_mouse_input(input, cmd.ui.mouse);
+        read_ui_controller_input(input, cmd.ui.controller);
 
         read_audio_volume(input, cmd.audio);
         read_sound_input(input, cmd.audio.sound);
         read_music_input(input, cmd.audio.music);
+    }
+
+
+    void read_ui_mouse_coords(input::Input const& input, sv::StringView& coords)
+    {
+        auto mouse_pos = input.mouse.window_pos;
+
+        sv::zero_view(coords);
+
+        qsnprintf(coords.data_, coords.capacity, "(%d, %d)", mouse_pos.x, mouse_pos.y);
+
+        coords.length = std::strlen(coords.data_);
     }
 
 }
@@ -1082,45 +1120,51 @@ namespace
         for (u32 i = 0; i < cmd.count; i++)
         {
             auto color_id = cmd.keys_on[i] ? key_on : key_off;
-            img::fill_if(ui.keys[i].view, color_id, can_set_color_id);
+            img::fill_if(ui.keys[i], color_id, can_set_color_id);
         }
 
         img::transform(ui.filter, state.screen_keyboard, to_render_color);
     }
 
 
-    void render_mouse(app::StateData const& state)
+    void render_mouse(AppCommand const& command, app::StateData const& state)
     {
-        auto& filter = state.mouse_filter;
-        auto& buttons = filter.buttons;
+        constexpr auto key_on = ID_RED;
+        constexpr auto key_off = ID_BLUE;
 
-        for (u32 i = 0; i < filter.count; i++)
+        auto& cmd = command.ui.mouse;
+        auto& ui = state.mouse_filter;
+        static_assert(cmd.count == ui.count);
+
+        for (u32 i = 0; i < cmd.count; i++)
         {
-            img::fill_if(buttons[i].view, buttons[i].color_id, can_set_color_id);
+            auto color_id = cmd.btns_on[i] ? key_on : key_off;
+            img::fill_if(ui.buttons[i], color_id, can_set_color_id);
         }
 
-        img::transform(filter.filter, state.screen_mouse, to_render_color);
-
-        //img::fill(state.screen_mouse_coords, img::to_pixel(0, 128, 0));
+        img::transform(ui.filter, state.screen_mouse, to_render_color);
+        
         write_to_view(state.ascii_filter, state.mouse_coords, state.screen_mouse_coords);
     }
 
 
-    void render_controller(app::StateData const& state)
+    void render_controller(AppCommand const& command, app::StateData const& state)
     {
-        auto& filter = state.controller_filter;
-        auto& buttons = filter.buttons;
+        constexpr auto key_on = ID_RED;
+        constexpr auto key_off = ID_BLUE;
 
-        for (u32 i = 0; i < filter.count; i++)
+        auto& cmd = command.ui.controller;
+        auto& ui = state.controller_filter;
+        static_assert(cmd.count == ui.count);
+
+        for (u32 i = 0; i < cmd.count; i++)
         {
-            img::fill_if(buttons[i].view, buttons[i].color_id, can_set_color_id);
+            auto color_id = cmd.btns_on[i] ? key_on : key_off;
+            img::fill_if(ui.buttons[i], color_id, can_set_color_id);
         }
 
-        img::transform(filter.filter, state.screen_controller, to_render_color);
-    }
-
-    
-    
+        img::transform(ui.filter, state.screen_controller, to_render_color);
+    }    
 
 
     void set_audio_volume(AppCommand const& command, app::StateData& state)
@@ -1181,12 +1225,11 @@ namespace
     }
 
 
-    void update_ui(AppCommand const& cmd, app::StateData& state)
-    {
-        
+    void render_ui(AppCommand const& cmd, app::StateData& state)
+    {        
         render_keyboard(cmd, state);
-        render_mouse(state);
-        render_controller(state);
+        render_mouse(cmd, state);
+        render_controller(cmd, state);
     }
 
 
@@ -1247,18 +1290,12 @@ namespace app
 
         AppCommand cmd{};
 
-        read_input(input, cmd);
-
-        update_key_colors(state_data.keyboard_filter, input);
-        update_mouse_colors(state_data.mouse_filter, input);
-        update_controller_colors(state_data.controller_filter, input);
-        update_mouse_coords(state_data.mouse_coords, input);        
-
-        
+        read_input_commands(input, cmd);
+        read_ui_mouse_coords(input, state_data.mouse_coords);  
 
         img::fill(screen, state_data.background_color);
 
-        update_ui(cmd, state_data);
+        render_ui(cmd, state_data);
 
         update_audio(cmd, state_data);
     }
