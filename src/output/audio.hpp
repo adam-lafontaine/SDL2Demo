@@ -17,11 +17,11 @@ namespace audio
 
     f32 set_sound_volume(f32 volume);
 
-    void play_music(Music const& music);
+    void play_music(Music& music);
 
-    void toggle_pause_music(Music const& music);
+    void toggle_pause_music(Music& music);
 
-    void play_sound(Sound const& sound);
+    void play_sound(Sound& sound);
 
     inline f32 set_master_volume(f32 volume)
     {

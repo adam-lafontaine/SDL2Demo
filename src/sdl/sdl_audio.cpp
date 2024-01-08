@@ -74,7 +74,8 @@ namespace audio
         Mix_FreeMusic((music_p)music.data_);
         music.data_ = nullptr;
 
-        music.placeholder = 0;
+        music.is_on = false;
+        music.is_paused = false;
     }
 
 
@@ -83,7 +84,7 @@ namespace audio
         Mix_FreeChunk((sound_p)sound.data_);
         sound.data_ = nullptr;
 
-        sound.placeholder = 0;
+        sound.is_on = false;
     }
 
 
@@ -134,7 +135,8 @@ namespace audio
 
         music.data_ = (void*)data;
 
-        music.placeholder = 0;
+        music.is_on = false;
+        music.is_paused = false;
 
         return true;
     }
@@ -158,7 +160,7 @@ namespace audio
 
         sound.data_ = (void*)data;
 
-        sound.placeholder = 0;
+        sound.is_on = false;
 
         return true;
     }
@@ -200,30 +202,57 @@ namespace audio
     }
 
 
-    void play_music(Music const& music)
+    void play_music(Music& music)
     {
         constexpr int FOREVER = -1;
         Mix_PlayMusic((music_p)music.data_, FOREVER);
+        music.is_on = true;
     }
 
 
-    void toggle_pause_music(Music const& music)
+    void toggle_pause_music(Music& music)
     {
+        if (!music.is_on)
+        {
+            return;
+        }
+
         if (Mix_PausedMusic() == 1)
         {
             Mix_ResumeMusic();
+            music.is_paused = false;
         }
         else
         {
             Mix_PauseMusic();
+            music.is_paused = false;
         }
     }
 
 
-    void play_sound(Sound const& sound)
+    static Sound* sound_list[10] = { 0 };
+
+    static void sound_finished(int channel)
+    {
+        if (sound_list[channel])
+        {
+            sound_list[channel]->is_on = false;
+        }
+    }
+
+
+    void play_sound(Sound& sound)
     {
         constexpr int N_REPEATS = 0;
-        Mix_PlayChannel(-1, (sound_p)sound.data_, N_REPEATS);
+        auto channel = Mix_PlayChannel(-1, (sound_p)sound.data_, N_REPEATS);
+
+        if (!sound_list[channel])
+        {
+            sound_list[channel] = &sound;
+            Mix_ChannelFinished(sound_finished);
+        }        
+
+        sound.is_on = true;
     }
    
 }

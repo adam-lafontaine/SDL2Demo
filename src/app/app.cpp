@@ -43,14 +43,6 @@ namespace
         return range;
     }
 
-
-    template <typename T>
-    static constexpr T clamp(T value, T min, T max)
-    {
-        const T t = value < min ? min : value;
-        return t > max ? max : t;
-    }
-
     
     template <typename T>
     static f32 sign(T value)
@@ -61,7 +53,6 @@ namespace
         return (f32)value < 0.0f ? -1.0f : 1.0f;
     }
 }
-
 
 
 
@@ -230,6 +221,7 @@ namespace filter
     };
 
 
+    // TODO: enum
     constexpr u8 ID_BLUE = 3;
     constexpr u8 ID_RED = 4;    
 
@@ -485,13 +477,6 @@ namespace filter
 
 namespace sound
 {
-    class State
-    {
-    public:
-        Sound sound;
-        b32 is_on;
-    };
-
     class SoundState
     {
     public:
@@ -499,14 +484,14 @@ namespace sound
 
         union 
         {
-            State list[count];
+            Sound list[count];
 
             struct 
             {
-                State laser;
-                State retro;
-                State door;
-                State force_field;
+                Sound laser;
+                Sound retro;
+                Sound door;
+                Sound force_field;
             };
         };
 
@@ -516,14 +501,6 @@ namespace sound
 
 namespace music
 {
-    class State
-    {
-    public:
-        Music music;
-        b32 is_on;
-    };
-
-
     class MusicState
     {
     public:
@@ -531,11 +508,11 @@ namespace music
 
         union 
         {
-            State list[count];
+            Music list[count];
 
             struct 
             {
-                State song;
+                Music song;
             };
         };
     };
@@ -560,12 +537,12 @@ namespace app
     {
         for (u32 i = 0; i < audio.sounds.count; i++)
         {
-            audio::destroy_sound(audio.sounds.list[i].sound);
+            audio::destroy_sound(audio.sounds.list[i]);
         }
 
         for (u32 i = 0; i < audio.music.count; i++)
         {
-            audio::destroy_music(audio.music.list[i].music);
+            audio::destroy_music(audio.music.list[i]);
         }
     }
 
@@ -773,29 +750,29 @@ namespace
 
         auto& sounds = audio.sounds;
 
-        if (!load_laser_sound(sounds.laser.sound))
+        if (!load_laser_sound(sounds.laser))
         {
             return false;
         }
 
-        if (!load_retro_sound(sounds.retro.sound))
+        if (!load_retro_sound(sounds.retro))
         {
             return false;
         }
 
-        if (!load_door_sound(sounds.door.sound))
+        if (!load_door_sound(sounds.door))
         {
             return false;
         }
 
-        if (!load_force_field_sound(sounds.force_field.sound))
+        if (!load_force_field_sound(sounds.force_field))
         {
             return false;
         }
 
         auto& music = audio.music;
 
-        if (!load_mellow_music(music.song.music))
+        if (!load_mellow_music(music.song))
         {
             return false;
         }
@@ -964,11 +941,11 @@ namespace
         {
             if (music.song.is_on)
             {
-                audio::toggle_pause_music(music.song.music);
+                audio::toggle_pause_music(music.song);
             }
             else
             {
-                audio::play_music(music.song.music);
+                audio::play_music(music.song);
                 music.song.is_on = true;
             }
         }
@@ -1038,7 +1015,7 @@ namespace
             auto& sound = sounds.list[i];
             if (sound.is_on)
             {
-                audio::play_sound(sound.sound);
+                audio::play_sound(sound);
                 sound.is_on = false;
             }
         }

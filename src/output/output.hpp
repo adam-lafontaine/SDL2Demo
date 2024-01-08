@@ -38,9 +38,8 @@ namespace audio
     public:
         void* data_;
 
-        // TODO: is_playing, paused etc.
-
-        int placeholder;
+        bool is_on;
+        bool is_paused;
     };
 
 
@@ -49,8 +48,11 @@ namespace audio
     public:
         void* data_;
 
-        int placeholder;
+        bool is_on;
     };
+
+
+    // TODO: playlist
 
 
     void destroy_music(Music& music);
