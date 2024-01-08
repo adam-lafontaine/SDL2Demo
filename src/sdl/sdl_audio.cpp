@@ -61,6 +61,25 @@ namespace
 }
 
 
+/*  */
+
+namespace audio
+{  
+    constexpr int MAX_AUDIO_TRACKS = 16;
+
+
+    static Sound* sound_tracks[MAX_AUDIO_TRACKS] = { 0 };
+
+    static void sound_finished_cb(int track_channel)
+    {
+        if (track_channel >= 0 && track_channel < MAX_AUDIO_TRACKS && sound_tracks[track_channel])
+        {
+            sound_tracks[track_channel]->is_on = false;
+        }
+    }
+}
+
+
 /* api */
 
 namespace audio
@@ -106,6 +125,8 @@ namespace audio
         }
 
         set_master_volume(0.5f);
+
+        Mix_ChannelFinished(sound_finished_cb);
 
         return true;
     }
@@ -225,18 +246,7 @@ namespace audio
         else
         {
             Mix_PauseMusic();
-            music.is_paused = false;
-        }
-    }
-
-
-    static Sound* sound_list[10] = { 0 };
-
-    static void sound_finished(int channel)
-    {
-        if (sound_list[channel])
-        {
-            sound_list[channel]->is_on = false;
+            music.is_paused = true;
         }
     }
 
@@ -244,15 +254,11 @@ namespace audio
     void play_sound(Sound& sound)
     {
         constexpr int N_REPEATS = 0;
-        auto channel = Mix_PlayChannel(-1, (sound_p)sound.data_, N_REPEATS);
-
-        if (!sound_list[channel])
-        {
-            sound_list[channel] = &sound;
-            Mix_ChannelFinished(sound_finished);
-        }        
 
         sound.is_on = true;
+
+        auto track_channel = Mix_PlayChannel(-1, (sound_p)sound.data_, N_REPEATS);
+        sound_tracks[track_channel] = &sound;
     }
    
 }

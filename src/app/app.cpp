@@ -1189,8 +1189,31 @@ namespace
     void play_sounds(AppCommand const& command, app::StateData& state)
     {
         auto& cmd = command.audio.sound;
-        auto& sounds = state.audio.sounds;
+        auto& sounds = state.audio.sounds;        
         static_assert(cmd.count == sounds.count);
+
+        auto& music = state.audio.music;
+
+        for (u32 i = 0; i < music.count; i++)
+        {
+            if (music.list[i].is_on && !music.list[i].is_paused)
+            {
+                return;
+            }
+        }
+
+        constexpr u32 max_sounds = 1;
+        u32 n_sounds = 0;
+
+        for (u32 i = 0; i < sounds.count; i++)
+        {
+            n_sounds += sounds.list[i].is_on;
+        }
+
+        if (n_sounds >= max_sounds)
+        {
+            return;
+        }
 
         for (u32 i = 0; i < cmd.count; i++)
         {
@@ -1296,7 +1319,6 @@ namespace app
         img::fill(screen, state_data.background_color);
 
         render_ui(cmd, state_data);
-
         update_audio(cmd, state_data);
     }
 
