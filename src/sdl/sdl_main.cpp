@@ -131,14 +131,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    /*sdl::AudioMemory audio{};
-    if (!sdl::create_audio_memory(audio))
-    {
-        print_message("Error: sdl::create_audio_memory()");
-        sdl::close();
-        return EXIT_FAILURE;
-    }*/
-
     app_state.screen.matrix_data_ = screen.image.data_;
 
     input::Input input[2] = {};
@@ -148,7 +140,6 @@ int main(int argc, char *argv[])
 
     auto const cleanup = [&]()
     {
-        //sdl::pause_audio(audio);
         app::close(app_state);
         sdl::close_game_controllers(controller_input, input[0]);
         sdl::close();
@@ -169,7 +160,6 @@ int main(int argc, char *argv[])
 #endif
 
     g_running = true;
-    //sdl::play_audio(audio);
 
     sw.start();
     while(g_running)

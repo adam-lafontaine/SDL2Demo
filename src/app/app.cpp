@@ -106,6 +106,18 @@ namespace sv
         return view;
     }
 
+
+    StringView to_string_view(cstr text)
+    {
+        StringView view{};
+
+        view.data_ = (char*)text;
+        view.capacity = std::strlen(text);
+        view.length = view.capacity;
+
+        return view;
+    }
+
 }
 
 
@@ -273,6 +285,8 @@ namespace
 
 }
 
+
+/* ui filters */
 
 namespace
 {
@@ -564,17 +578,6 @@ namespace
 
             dst_rect.x_begin = dst_rect.x_end;
         }
-    }
-
-
-    static void write_to_view(AsciiFilter const& filter, cstr text, SubView const& dst)
-    {
-        sv::StringView str{};
-        str.data_ = (char*)text;
-        str.capacity = std::strlen(text);
-        str.length = str.capacity;
-
-        write_to_view(filter, str, dst);
     }
 }
 
@@ -984,8 +987,6 @@ namespace
         auto spacebar_view = img::sub_view(state_data.screen_keyboard, spacebar_filter.range);
         auto const play_pause_rect = to_rect(play_pause_x, play_pause_y, play_pause_width, text_height);
         state_data.screen_play_pause = img::sub_view(spacebar_view, play_pause_rect);
-
-
     }
 
 }
@@ -1157,7 +1158,7 @@ namespace
 
         cstr text = (!song.is_on || song.is_paused) ? "play" : "pause";
 
-        write_to_view(state.ascii_filter, text, state.screen_play_pause);
+        write_to_view(state.ascii_filter, sv::to_string_view(text), state.screen_play_pause);
     }
 
 

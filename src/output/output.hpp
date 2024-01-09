@@ -52,9 +52,6 @@ namespace audio
     };
 
 
-    // TODO: playlist
-
-
     void destroy_music(Music& music);
 
     void destroy_sound(Sound& sound);
