@@ -565,6 +565,17 @@ namespace
             dst_rect.x_begin = dst_rect.x_end;
         }
     }
+
+
+    static void write_to_view(AsciiFilter const& filter, cstr text, SubView const& dst)
+    {
+        sv::StringView str{};
+        str.data_ = (char*)text;
+        str.capacity = std::strlen(text);
+        str.length = str.capacity;
+
+        write_to_view(filter, str, dst);
+    }
 }
 
 
@@ -663,8 +674,6 @@ namespace
 
 namespace app
 {
-    
-
     class AudioState
     {
     public:
@@ -705,7 +714,9 @@ namespace app
         SubView screen_keyboard;
         SubView screen_mouse;
         SubView screen_controller;
+
         SubView screen_mouse_coords;
+        SubView screen_play_pause;
 
         AudioState audio;
 
@@ -947,7 +958,9 @@ namespace
         
         state_data.screen_keyboard = img::sub_view(screen, keyboard);
         state_data.screen_mouse = img::sub_view(screen, mouse);
-        state_data.screen_controller = img::sub_view(screen, controller);        
+        state_data.screen_controller = img::sub_view(screen, controller);
+
+        auto const text_height = state_data.ascii_filter.filter.height;
 
         auto const mouse_width = state_data.screen_mouse.width;
         auto const mouse_height = state_data.screen_mouse.height;
@@ -955,10 +968,24 @@ namespace
         auto const coord_x = mouse_width / 6;
         auto const coord_y = mouse_height / 2;
         auto const coord_width = mouse_width * 2 / 3;
-        auto const coord_height = state_data.ascii_filter.filter.height;
-        auto coords = to_rect(coord_x, coord_y, coord_width, coord_height);
+        auto const coords = to_rect(coord_x, coord_y, coord_width, text_height);
 
         state_data.screen_mouse_coords = img::sub_view(state_data.screen_mouse, coords);
+
+        auto const spacebar_width = state_data.keyboard_filter.key_space.width;
+        auto const spacebar_height = state_data.keyboard_filter.key_space.height;
+
+        auto const play_pause_width = 30;
+        auto const play_pause_x = (spacebar_width - play_pause_width) / 2;
+        auto const play_pause_y = (spacebar_height - text_height) / 2;
+        
+
+        auto& spacebar_filter = state_data.keyboard_filter.key_space;
+        auto spacebar_view = img::sub_view(state_data.screen_keyboard, spacebar_filter.range);
+        auto const play_pause_rect = to_rect(play_pause_x, play_pause_y, play_pause_width, text_height);
+        state_data.screen_play_pause = img::sub_view(spacebar_view, play_pause_rect);
+
+
     }
 
 }
@@ -1124,6 +1151,13 @@ namespace
         }
 
         img::transform(ui.filter, state.screen_keyboard, to_render_color);
+
+
+        auto& song = state.audio.music.song;
+
+        cstr text = (!song.is_on || song.is_paused) ? "play" : "pause";
+
+        write_to_view(state.ascii_filter, text, state.screen_play_pause);
     }
 
 
