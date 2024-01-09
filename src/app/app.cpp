@@ -65,7 +65,6 @@ namespace
 }
 
 
-
 /* string_view */
 
 namespace sv
@@ -229,8 +228,9 @@ namespace
     constexpr auto WHITE = img::to_pixel(255, 255, 255);
     constexpr auto BLACK = img::to_pixel(0, 0, 0);
     constexpr auto TRANSPARENT = img::to_pixel(0, 0, 0, 0);
-    constexpr auto BTN_BLUE = img::to_pixel(0, 0, 200);
-    constexpr auto BTN_GREEN = img::to_pixel(0, 200, 0);
+    constexpr auto BLUE = img::to_pixel(0, 75, 168);
+    constexpr auto LIGHT_BLUE = img::to_pixel(23, 190, 187);
+    constexpr auto GRAY = img::to_pixel(120);
 
 
     static constexpr std::array<Pixel, 5> COLOR_TABLE = 
@@ -238,8 +238,8 @@ namespace
         TRANSPARENT,
         BLACK,
         WHITE,      
-        BTN_BLUE,
-        BTN_GREEN
+        BLUE,
+        LIGHT_BLUE
     };
 
 
@@ -249,7 +249,7 @@ namespace
         Black = 1,
         White = 2,
         Blue = 3,
-        Green = 4
+        LightBlue = 4
     };
 
 
@@ -897,7 +897,7 @@ namespace
         screen.width = screen_width;
         screen.height = screen_height;        
 
-        state_data.background_color = img::to_pixel(128, 128, 128);
+        state_data.background_color = GRAY;
 
         cleanup();
 
@@ -1148,7 +1148,7 @@ namespace
 {
     void render_keyboard(AppCommand const& command, app::StateData const& state)
     {
-        constexpr auto key_on = to_u8(ColorId::Green);
+        constexpr auto key_on = to_u8(ColorId::LightBlue);
         constexpr auto key_off = to_u8(ColorId::Blue);
 
         auto& cmd = command.ui.keyboard;
@@ -1174,7 +1174,7 @@ namespace
 
     void render_mouse(AppCommand const& command, app::StateData const& state)
     {
-        constexpr auto key_on = to_u8(ColorId::Green);
+        constexpr auto key_on = to_u8(ColorId::LightBlue);
         constexpr auto key_off = to_u8(ColorId::Blue);
 
         auto& cmd = command.ui.mouse;
@@ -1195,7 +1195,7 @@ namespace
 
     void render_controller(AppCommand const& command, app::StateData const& state)
     {
-        constexpr auto key_on = to_u8(ColorId::Green);
+        constexpr auto key_on = to_u8(ColorId::LightBlue);
         constexpr auto key_off = to_u8(ColorId::Blue);
 
         auto& cmd = command.ui.controller;

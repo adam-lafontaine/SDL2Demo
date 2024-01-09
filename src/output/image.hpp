@@ -64,6 +64,12 @@ namespace image
     {
         return to_pixel(red, green, blue, 255);
     }
+
+
+    constexpr inline Pixel to_pixel(u8 gray)
+    {
+        return to_pixel(gray, gray, gray);
+    }
  
 
 
