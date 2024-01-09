@@ -230,7 +230,7 @@ namespace
     constexpr auto BLACK = img::to_pixel(0, 0, 0);
     constexpr auto TRANSPARENT = img::to_pixel(0, 0, 0, 0);
     constexpr auto BTN_BLUE = img::to_pixel(0, 0, 200);
-    constexpr auto BTN_RED = img::to_pixel(200, 0, 0);
+    constexpr auto BTN_GREEN = img::to_pixel(0, 200, 0);
 
 
     static constexpr std::array<Pixel, 5> COLOR_TABLE = 
@@ -239,37 +239,45 @@ namespace
         BLACK,
         WHITE,      
         BTN_BLUE,
-        BTN_RED
+        BTN_GREEN
     };
 
 
-    // TODO: enum
-    constexpr u8 ID_TRANSPARENT = 0;
-    constexpr u8 ID_BLACK = 1;
-    constexpr u8 ID_WHITE = 2;
-    constexpr u8 ID_BLUE = 3;
-    constexpr u8 ID_RED = 4;    
+    enum class ColorId : u8
+    {
+        Trasnparent = 0,
+        Black = 1,
+        White = 2,
+        Blue = 3,
+        Green = 4
+    };
+
+
+    constexpr u8 to_u8(ColorId id)
+    {
+        return static_cast<u8>(id);
+    }
 
 
     u8 to_filter_color_id(Pixel p)
     {
         if (p.alpha == 0)
         {
-            return ID_TRANSPARENT;
+            return to_u8(ColorId::Trasnparent);
         }
 
         if (p.red == 0 && p.green == 0 && p.blue == 0)
         {
-            return ID_BLACK;
+            return to_u8(ColorId::Black);
         }
 
-        return ID_WHITE;
+        return to_u8(ColorId::White);
     }
 
 
     bool can_set_color_id(u8 current_id)
     {
-        return current_id > 1;
+        return current_id > to_u8(ColorId::Black);
     }
 
 
@@ -538,13 +546,15 @@ namespace
         constexpr auto char_length_count = sizeof(char_length) / sizeof(u32);
         static_assert(char_length_count == ascii.count);
 
+        constexpr auto black_id = to_u8(ColorId::Black);
+
         u32 x = 0;
         for (u32 i = 0; i < ascii.count; i++)
         {
             auto width = char_length[i] * scale;
             characters[i] = img::sub_view(view, to_rect(x, 0, width, view.height));
 
-            img::fill_if(characters[i], ID_BLACK, can_set_color_id);
+            img::fill_if(characters[i], black_id, can_set_color_id);
 
             x += width;
         }
@@ -1138,8 +1148,8 @@ namespace
 {
     void render_keyboard(AppCommand const& command, app::StateData const& state)
     {
-        constexpr auto key_on = ID_RED;
-        constexpr auto key_off = ID_BLUE;
+        constexpr auto key_on = to_u8(ColorId::Green);
+        constexpr auto key_off = to_u8(ColorId::Blue);
 
         auto& cmd = command.ui.keyboard;
         auto& ui = state.keyboard_filter;
@@ -1164,8 +1174,8 @@ namespace
 
     void render_mouse(AppCommand const& command, app::StateData const& state)
     {
-        constexpr auto key_on = ID_RED;
-        constexpr auto key_off = ID_BLUE;
+        constexpr auto key_on = to_u8(ColorId::Green);
+        constexpr auto key_off = to_u8(ColorId::Blue);
 
         auto& cmd = command.ui.mouse;
         auto& ui = state.mouse_filter;
@@ -1185,8 +1195,8 @@ namespace
 
     void render_controller(AppCommand const& command, app::StateData const& state)
     {
-        constexpr auto key_on = ID_RED;
-        constexpr auto key_off = ID_BLUE;
+        constexpr auto key_on = to_u8(ColorId::Green);
+        constexpr auto key_off = to_u8(ColorId::Blue);
 
         auto& cmd = command.ui.controller;
         auto& ui = state.controller_filter;
