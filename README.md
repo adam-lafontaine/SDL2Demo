@@ -1,6 +1,8 @@
 # SDL2 Demo
 
-A starter application that detects keyboard, mouse and game controller input using SDL2.
+A starter application using SDL2
+* Detects keyboard, mouse and game controller input
+* Plays music and sound effects.
 
 ## Setup Instructions
 
