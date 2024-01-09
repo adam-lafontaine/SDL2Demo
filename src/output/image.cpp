@@ -40,16 +40,38 @@ namespace image
 namespace image
 {
     template <typename T>
-	static inline T* row_begin(MatrixView2D<T> const& view, u32 y)
+	static inline SpanView<T> row_begin(MatrixView2D<T> const& view, u32 y)
 	{
-		return view.matrix_data_ + (u64)(y * view.width);
+        SpanView<T> span{};
+
+        span.begin = view.matrix_data_ + (u64)(y * view.width);
+        span.length = view.width;
+
+        return span;
 	}
 
 
     template <typename T>
-    static inline T* row_begin(MatrixSubView2D<T> const& view, u32 y)
+    static inline SpanView<T> row_begin(MatrixSubView2D<T> const& view, u32 y)
     {
-        return view.matrix_data_ + (u64)((view.y_begin + y) * view.matrix_width + view.x_begin);
+        SpanView<T> span{};
+
+        span.begin = view.matrix_data_ + (u64)((view.y_begin + y) * view.matrix_width + view.x_begin);
+        span.length = view.width;
+
+        return span;
+    }
+
+
+    template <typename T>
+    static inline SpanView<T> to_span(MatrixView2D<T> const& view)
+    {
+        SpanView<T> span{};
+
+        span.begin = view.matrix_data_;
+        span.length = view.width * view.height;
+
+        return span;
     }
 }
 
@@ -91,18 +113,28 @@ namespace image
 namespace image
 {
     template <typename T>
-	static inline void fill_span(T* dst, T value, u32 len)
+	static inline void fill_span(SpanView<T> const& dst, T value)
 	{
-		for (u32 i = 0; i < len; ++i)
+		for (u32 i = 0; i < dst.length; ++i)
 		{
-			dst[i] = value;
+			dst.begin[i] = value;
 		}
 	}
 
 
+    template <typename T>
+    static void fill_span_if(SpanView<T> const& dst, u8 value, fn<bool(T)> const& pred)
+    {
+        for (u32 i = 0; i < dst.length; ++i)
+		{
+			dst.begin[i] = pred(dst.begin[i]) ? value : dst.begin[i];
+		}
+    }
+
+
     void fill(ImageView const& view, Pixel color)
     {
-        fill_span(view.matrix_data_, color, view.width * view.height);
+        fill_span(to_span(view), color);
     }
 
 
@@ -110,7 +142,7 @@ namespace image
     {
         for (u32 y = 0; y < view.height; y++)
         {
-            fill_span(row_begin(view, y), color, view.width);
+            fill_span(row_begin(view, y), color);
         }
     }
 
@@ -119,14 +151,7 @@ namespace image
     {
         for (u32 y = 0; y < view.height; y++)
         {
-            auto row = row_begin(view, y);
-            for (u32 x = 0; x < view.width; x++)
-            {
-                if (pred(row[x]))
-                {
-                    row[x] = gray;
-                }
-            }
+            fill_span_if(row_begin(view, y), gray, pred);
         }
     }
 }
@@ -136,6 +161,30 @@ namespace image
 
 namespace image
 {
+    static void transform_span(SpanView<u8> const& src, SpanView<Pixel> const& dst, fn<Pixel(u8, Pixel)> const& func)
+    {
+        auto s = src.begin;
+        auto d = dst.begin;
+
+        for (u32 i = 0; i < src.length; i++)
+        {
+            d[i] = func(s[i], d[i]);
+        }
+    }
+
+
+    static void transform_span(SpanView<Pixel> const& src, SpanView<u8> const& dst, fn<u8(Pixel)> const& func)
+    {
+        auto s = src.begin;
+        auto d = dst.begin;
+
+        for (u32 i = 0; i < src.length; i++)
+        {
+            d[i] = func(s[i]);
+        }
+    }
+
+
     void transform(GrayView const& src, SubView const& dst, fn<Pixel(u8, Pixel)> const& func)
     {
         assert(src.matrix_data_);
@@ -145,12 +194,7 @@ namespace image
 
         for (u32 y = 0; y < src.height; y++)
         {
-            auto s = row_begin(src, y);
-            auto d = row_begin(dst, y);
-            for (u32 x = 0; x < src.width; x++)
-            {
-                d[x] = func(s[x], d[x]);
-            }
+            transform_span(row_begin(src, y), row_begin(dst, y), func);
         }
     }
 
@@ -164,12 +208,7 @@ namespace image
 
         for (u32 y = 0; y < src.height; y++)
         {
-            auto s = row_begin(src, y);
-            auto d = row_begin(dst, y);
-            for (u32 x = 0; x < src.width; x++)
-            {
-                d[x] = func(s[x], d[x]);
-            }
+            transform_span(row_begin(src, y), row_begin(dst, y), func);
         }
     }
 
@@ -181,15 +220,7 @@ namespace image
         assert(dst.width == src.width);
         assert(dst.height == src.height);
 
-        auto const len = src.width * src.height;
-
-        auto s = src.matrix_data_;
-        auto d = dst.matrix_data_;
-
-        for (u32 i = 0; i < len; i++)
-        {
-            d[i] = func(s[i]);
-        }
+        transform_span(to_span(src), to_span(dst), func);
     }
 
 
@@ -205,7 +236,7 @@ namespace image
             auto src_row = row_begin(src, src_y);
             for (u32 src_x = 0; src_x < src.width; src_x++)
             {
-                auto const value = func(src_row[src_x]);
+                auto const value = func(src_row.begin[src_x]);
 
                 auto dst_y = src_y * scale;
                 for (u32 offset_y = 0; offset_y < scale; offset_y++, dst_y++)
@@ -215,7 +246,7 @@ namespace image
                     auto dst_x = src_x * scale;
                     for (u32 offset_x = 0; offset_x < scale; offset_x++, dst_x++)
                     {
-                        dst_row[dst_x] = value;
+                        dst_row.begin[dst_x] = value;
                     }
                 }
             }

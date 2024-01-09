@@ -57,10 +57,19 @@ class MatrixView2D
 {
 public:
 
-	T* matrix_data_ = 0;
+	T* matrix_data_ = nullptr;
 
 	u32 width = 0;
 	u32 height = 0;
+};
+
+
+template <typename T>
+class SpanView
+{
+public:
+	T* begin = nullptr;
+	u32 length;
 };
 
 
