@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../input/input.hpp"
+#include "../output/output.hpp"
 
 
 #if defined(_WIN32)
@@ -26,20 +27,18 @@ static void print_message(const char* msg)
 }
 
 
-//#define SDL2_IMPL_B
-
 namespace sdl
 {
-    constexpr auto SCREEN_BYTES_PER_PIXEL = sizeof(Pixel);
+    constexpr auto SCREEN_BYTES_PER_PIXEL = sizeof(image::Pixel);
     constexpr auto MAX_CONTROLLERS = input::MAX_CONTROLLERS;
 
 #ifdef SDL2_WASM
 
-    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO;
+    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO | SDL_INIT_AUDIO;
 
 #else
     
-    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC;
+    constexpr auto SDL_OPTIONS = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC;
 
 #endif
 
@@ -252,8 +251,7 @@ namespace sdl
 }
 
 
-#ifndef SDL2_IMPL_B
-
+/* screen memory */
 
 namespace sdl
 {
@@ -265,7 +263,7 @@ namespace sdl
         SDL_Renderer* renderer = nullptr;
         SDL_Texture* texture = nullptr;
 
-        Image image;
+        image::Image image;
     };
 
 
@@ -273,7 +271,7 @@ namespace sdl
     {
         if (screen.image.data_)
         {
-            free(screen.image.data_);
+            image::destroy_image(screen.image);
         }
 
         if (screen.texture)
@@ -352,9 +350,7 @@ namespace sdl
 
         static bool create_image(ScreenMemory& screen, u32 width, u32 height)
         {
-            screen.image.data_ = (Pixel*)malloc((size_t)(sizeof(Pixel) * width * height));
-
-            if(!screen.image.data_)
+            if(!image::create_image(screen.image, width, height))
             {
                 display_error("Allocating image memory failed");
                 return false;
@@ -450,156 +446,3 @@ namespace sdl
         SDL_RenderPresent(screen.renderer);
     }
 }
-
-#else
-
-namespace sdl
-{
-    class ScreenMemory
-    {
-    public:
-
-        SDL_Window* window = nullptr;
-        SDL_Renderer* renderer = nullptr;
-        SDL_Texture* texture = nullptr;
-        SDL_Surface* surface = nullptr;
-
-        void* image_data = nullptr;
-        
-        int image_width;
-        int image_height;
-
-        bool surface_locked = false;
-    };
-
-
-    static void lock_surface(ScreenMemory& screen)
-    {
-        //assert(screen.surface);
-
-        if (!screen.surface_locked && SDL_MUSTLOCK(screen.surface)) 
-        {
-            SDL_LockSurface(screen.surface);
-            screen.surface_locked = true;
-        }
-    }
-
-
-    static void unlock_surface(ScreenMemory& screen)
-    {
-        //assert(screen.surface);
-
-        if (screen.surface_locked && SDL_MUSTLOCK(screen.surface)) 
-        {
-            SDL_UnlockSurface(screen.surface);
-            screen.surface_locked = false;
-        }
-    }
-
-
-    static void destroy_screen_memory(ScreenMemory& screen)
-    {
-        unlock_surface(screen);
-
-        if (screen.texture)
-        {
-            SDL_DestroyTexture(screen.texture);
-        }
-
-        if (screen.renderer)
-        {
-            SDL_DestroyRenderer(screen.renderer);
-        }
-
-        if(screen.window)
-        {
-            SDL_DestroyWindow(screen.window);
-        }
-    }
-
-
-    static bool create_screen_memory(ScreenMemory& screen, const char* title, int width, int height)
-    {
-        destroy_screen_memory(screen);
-
-        screen.window = SDL_CreateWindow(
-            title,
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOWPOS_UNDEFINED,
-            width,
-            height,
-            SDL_WINDOW_RESIZABLE);
-
-        if(!screen.window)
-        {
-            display_error("SDL_CreateWindow failed");
-            return false;
-        }
-
-        set_window_icon(screen.window);
-
-        screen.renderer = SDL_CreateRenderer(screen.window, -1, 0);
-
-        if(!screen.renderer)
-        {
-            display_error("SDL_CreateRenderer failed");
-            destroy_screen_memory(screen);
-            return false;
-        }
-
-        screen.surface = SDL_CreateRGBSurface(
-            0,
-            width,
-            height,
-            SCREEN_BYTES_PER_PIXEL * 8,
-            0, 0, 0, 0);
-
-        if(!screen.surface)
-        {
-            display_error("SDL_CreateRGBSurface failed");
-            destroy_screen_memory(screen);
-            return false;
-        }
-
-        screen.texture =  SDL_CreateTextureFromSurface(screen.renderer, screen.surface);    
-        
-        if(!screen.texture)
-        {
-            display_error("SDL_CreateTextureFromSurface");
-            destroy_screen_memory(screen);
-            return false;
-        }    
-
-        screen.image_data = (void*)(screen.surface->pixels);
-
-        screen.image_width = width;
-        screen.image_height = height;
-
-        return true;
-    }
-
-
-    static void render_screen(ScreenMemory& screen)
-    {
-        unlock_surface(screen);
-
-        auto const pitch = screen.image_width * SCREEN_BYTES_PER_PIXEL;
-        auto error = SDL_UpdateTexture(screen.texture, 0, screen.image_data, pitch);
-        if(error)
-        {
-            print_sdl_error("SDL_UpdateTexture failed");
-        }
-
-        error = SDL_RenderCopy(screen.renderer, screen.texture, 0, 0);
-        if(error)
-        {
-            print_sdl_error("SDL_RenderCopy failed");
-        }
-        
-        SDL_RenderPresent(screen.renderer);
-        
-        lock_surface(screen);
-    }
-}
-
-#endif

@@ -8,6 +8,7 @@ using u16 = uint16_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 
+using i8 = int8_t;
 using i16 = int16_t;
 using i32 = int32_t;
 using i64 = int64_t;
@@ -16,6 +17,7 @@ using f32 = float;
 using f64 = double;
 
 using b32 = u32;
+using b8 = u8;
 
 using cstr = const char*;
 
@@ -62,26 +64,6 @@ public:
 };
 
 
-class RGBAu8
-{
-public:
-	u8 red;
-	u8 green;
-	u8 blue;
-	u8 alpha;
-};
-
-
-template <typename T>
-class DataResult
-{
-public:
-	T data;
-	bool success = false;
-	cstr message = 0;
-};
-
-
 template <typename T>
 using Point2D = Vec2D<T>;
 
@@ -99,7 +81,3 @@ using Rect2Di32 = Rect2D<i32>;
 using Rect2Df32 = Rect2D<f32>;
 using Rect2Du32 = Rect2D<u32>;
 using Rect2Df64 = Rect2D<f64>;
-
-using Pixel = RGBAu8;
-using Image = Matrix2D<Pixel>;
-using ImageView = MatrixView2D<Pixel>;

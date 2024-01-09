@@ -4,19 +4,20 @@ GPP := g++-11 -std=c++17
 #GPP += -DNDEBUG
 
 # apt-get install libsdl2-dev
-SDL2 := `sdl2-config --cflags --libs`
+# apt-get install libsdl2-mixer-dev
+SDL2 := -lSDL2 -lSDL2_mixer
 NO_FLAGS := 
 
 ALL_LFLAGS := $(SDL2)
 
-root  := ../..
-build := $(root)/build/sdl
-src   := $(root)/src
-util  := $(src)/util
-input := $(src)/input
-sdl   := $(src)/sdl
-image := $(src)/image
-app   := $(src)/app
+root   := ../..
+build  := $(root)/build/sdl
+src    := $(root)/src
+util   := $(src)/util
+input  := $(src)/input
+output := $(src)/output
+sdl    := $(src)/sdl
+app    := $(src)/app
 
 exe := sdl_app
 
@@ -55,10 +56,36 @@ input_state_h += $(input_h)
 #**************
 
 
+#*** output ***
+
+output_h := $(output)/output.hpp
+output_h += $(types_h)
+
+#***********
+
+
+#*** image ***
+
+image_h := $(output)/image.hpp
+image_h += $(output_h)
+image_h += $(memory_buffer_h)
+
+#**************
+
+
+#*** audio ***
+
+audio_h := $(output)/audio.hpp
+audio_h += $(output_h)
+
+#*************
+
+
 #*** sdl ***
 
 sdl_include_h := $(sdl)/sdl_include.hpp
 sdl_include_h += $(input_h)
+sdl_include_h += $(output_h)
 
 #**********
 
@@ -67,6 +94,7 @@ sdl_include_h += $(input_h)
 
 app_h := $(app)/app.hpp
 app_h += $(input_h)
+app_h += $(output_h)
 
 #************
 
@@ -93,7 +121,27 @@ object_files += $(sdl_input_o)
 sdl_input_dep := $(sdl_include_h)
 sdl_input_dep += $(input_state_h)
 
+
+sdl_audio_c := $(sdl)/sdl_audio.cpp
+sdl_audio_o := $(build)/sdl_audio.o
+object_files += $(sdl_audio_o)
+
+sdl_audio_dep := $(sdl_include_h)
+sdl_audio_dep += $(audio_h)
+
 #************
+
+
+#*** image cpp ***
+
+image_c := $(output)/image.cpp
+image_o := $(build)/image.o
+object_files += $(image_o)
+
+image_dep := $(image_h)
+image_dep += $(stb_image_h)
+
+#*************
 
 
 #*** util cpp ***
@@ -116,8 +164,8 @@ app_o        := $(build)/app.o
 object_files += $(app_o)
 
 app_dep := $(app_h)
-app_dep += $(memory_buffer_h)
-app_dep += $(stb_image_h)
+app_dep += $(image_h)
+app_dep += $(audio_h)
 app_dep += $(qsprintf_h)
 
 #************
@@ -131,6 +179,16 @@ $(main_o): $(main_c) $(main_dep)
 $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)
 	@echo "\n  sdl_input"
 	$(GPP) -o $@ -c $< $(SDL2)
+
+
+$(sdl_audio_o): $(sdl_audio_c) $(sdl_audio_dep)
+	@echo "\n  sdl_audio"
+	$(GPP) -o $@ -c $< $(SDL2)
+
+
+$(image_o): $(image_c) $(image_dep)
+	@echo "\n  image"
+	$(GPP) -o $@ -c $< $(NO_FLAGS)
 
 
 $(util_o): $(util_c) $(util_dep)

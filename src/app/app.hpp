@@ -1,16 +1,21 @@
 #pragma once
 
 #include "../input/input.hpp"
+#include "../output/output.hpp"
+
 
 namespace app
 {
+    using ImageView = image::ImageView;
+
+
     class StateData;
 
 
     class AppState
     {
     public:
-        ImageView screen_view;
+        ImageView screen;
 
         StateData* data_ = nullptr;
     };

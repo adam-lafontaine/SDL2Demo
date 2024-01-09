@@ -102,11 +102,11 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    assert(app_state.screen_view.width);
-    assert(app_state.screen_view.height);
+    assert(app_state.screen.width);
+    assert(app_state.screen.height);
 
-    auto const screen_width = app_state.screen_view.width;
-    auto const screen_height = app_state.screen_view.height;
+    auto const screen_width = app_state.screen.width;
+    auto const screen_height = app_state.screen.height;
 
     if (!screen_width || !screen_height)
     {
@@ -131,10 +131,12 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    app_state.screen_view.matrix_data_ = screen.image.data_;
+    app_state.screen.matrix_data_ = screen.image.data_;
 
     input::Input input[2] = {};
     sdl::ControllerInput controller_input = {};
+    sdl::open_game_controllers(controller_input, input[0]);
+    input[1].num_controllers = input[0].num_controllers;
 
     auto const cleanup = [&]()
     {
@@ -143,21 +145,18 @@ int main(int argc, char *argv[])
         sdl::close();
     };
 
-    open_game_controllers(controller_input, input[0]);
-    input[1].num_controllers = input[0].num_controllers;
-
     b32 frame_curr = 0;
     b32 frame_prev = 1;
 
     Stopwatch sw;
-    f64 frame_nano = TARGET_NS_PER_FRAME;
-    f64 ns_elapsed = 0.0;
+    f64 frame_nano = TARGET_NS_PER_FRAME;    
 
 #ifndef NDEBUG
-    constexpr f64 title_refresh_ns = NANO * 0.25;
-    constexpr int TITLE_LEN = 50;
-    char dbg_title[TITLE_LEN] = { 0 };
-    int frame_milli = 0;
+    f64 dbg_ns_elapsed = 0.0;
+    constexpr f64 dbg_title_refresh_ns = NANO * 0.25;
+    constexpr int dbg_TITLE_LEN = 50;
+    char dbg_title[dbg_TITLE_LEN] = { 0 };
+    int dbg_frame_milli = 0;
 #endif
 
     g_running = true;
@@ -198,7 +197,7 @@ int main(int argc, char *argv[])
         frame_nano = sw.get_time_nano();
 
 #ifndef NDEBUG
-        frame_milli = (int)(frame_nano / 1'000'000 + 0.5);
+        dbg_frame_milli = (int)(frame_nano / 1'000'000 + 0.5);
 #endif
 
         auto sleep_ns = TARGET_NS_PER_FRAME - frame_nano;
@@ -211,18 +210,17 @@ int main(int argc, char *argv[])
             }        
         }
 
-        ns_elapsed += frame_nano;
-
         sw.start();
 
 #ifndef NDEBUG
-        if(ns_elapsed >= title_refresh_ns)
+        dbg_ns_elapsed += frame_nano;
+        if(dbg_ns_elapsed >= dbg_title_refresh_ns)
         {
             auto fps = (int)(NANO / frame_nano + 0.5);
-            qsnprintf(dbg_title, TITLE_LEN, "%s (%d fps / %d ms)", WINDOW_TITLE, fps, frame_milli);
+            qsnprintf(dbg_title, dbg_TITLE_LEN, "%s (%d fps / %d ms)", WINDOW_TITLE, fps, dbg_frame_milli);
             SDL_SetWindowTitle(screen.window, dbg_title);
 
-            ns_elapsed = 0.0;
+            dbg_ns_elapsed = 0.0;
         }
 #endif
 

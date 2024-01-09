@@ -1,6 +1,8 @@
 # SDL2 Demo
 
-A starter application that detects keyboard, mouse and game controller input using SDL2.
+A starter application using SDL2
+* Detects keyboard, mouse and game controller input
+* Plays music and sound effects.
 
 ## Setup Instructions
 
@@ -26,6 +28,7 @@ Install SDL2
 
 ```
 apt-get install libsdl2-dev
+apt-get install libsdl2-mixer-dev
 ```
 
 Create the build directory
@@ -53,6 +56,7 @@ Install SDL2
 
 ```
 .\vcpkg.exe install sdl2:x64-windows
+.\vcpkg.exe install sdl2-mixer:x64-windows
 ```
 
 Run the Visual Studio solution in /VS/SDL2Demo
