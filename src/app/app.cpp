@@ -230,7 +230,7 @@ namespace
     constexpr auto TRANSPARENT = img::to_pixel(0, 0, 0, 0);
     constexpr auto BLUE = img::to_pixel(0, 75, 168);
     constexpr auto LIGHT_BLUE = img::to_pixel(23, 190, 187);
-    constexpr auto GRAY = img::to_pixel(120);
+    constexpr auto GRAY = img::to_pixel(115, 140, 153);
 
 
     static constexpr std::array<Pixel, 5> COLOR_TABLE = 

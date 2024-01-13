@@ -5,10 +5,11 @@ GPP := g++-11 -std=c++17
 
 # apt-get install libsdl2-dev
 # apt-get install libsdl2-mixer-dev
-SDL2 := -lSDL2 -lSDL2_mixer
+SDL2 := `sdl2-config --cflags --libs`
+SDL_AUDIO := -lSDL2_mixer
 NO_FLAGS := 
 
-ALL_LFLAGS := $(SDL2)
+ALL_LFLAGS := $(SDL2) $(SDL_AUDIO)
 
 root   := ../..
 build  := $(root)/build/sdl
@@ -101,9 +102,9 @@ app_h += $(output_h)
 
 #*** main cpp ***
 
-main_c         := $(sdl)/sdl_main.cpp
-main_o         := $(build)/main.o
-object_files   := $(main_o)
+main_c := $(sdl)/sdl_main.cpp
+main_o := $(build)/main.o
+obj    := $(main_o)
 
 main_dep := $(sdl_include_h)
 main_dep += $(stopwatch_h)
@@ -116,7 +117,7 @@ main_dep += $(app_h)
 
 sdl_input_c  := $(sdl)/sdl_input.cpp
 sdl_input_o  := $(build)/sdl_input.o
-object_files += $(sdl_input_o)
+obj += $(sdl_input_o)
 
 sdl_input_dep := $(sdl_include_h)
 sdl_input_dep += $(input_state_h)
@@ -124,7 +125,7 @@ sdl_input_dep += $(input_state_h)
 
 sdl_audio_c := $(sdl)/sdl_audio.cpp
 sdl_audio_o := $(build)/sdl_audio.o
-object_files += $(sdl_audio_o)
+obj += $(sdl_audio_o)
 
 sdl_audio_dep := $(sdl_include_h)
 sdl_audio_dep += $(audio_h)
@@ -136,7 +137,7 @@ sdl_audio_dep += $(audio_h)
 
 image_c := $(output)/image.cpp
 image_o := $(build)/image.o
-object_files += $(image_o)
+obj += $(image_o)
 
 image_dep := $(image_h)
 image_dep += $(stb_image_h)
@@ -148,7 +149,7 @@ image_dep += $(stb_image_h)
 
 util_c       := $(util)/util.cpp
 util_o       := $(build)/util.o
-object_files += $(util_o)
+obj += $(util_o)
 
 util_dep := $(qsprintf_h)
 util_dep += $(qsprintf)/qsprintf.cpp
@@ -161,7 +162,7 @@ util_dep += $(stb_image)/stb_image_options.hpp
 
 app_c        := $(app)/app.cpp
 app_o        := $(build)/app.o
-object_files += $(app_o)
+obj += $(app_o)
 
 app_dep := $(app_h)
 app_dep += $(image_h)
@@ -183,7 +184,7 @@ $(sdl_input_o): $(sdl_input_c) $(sdl_input_dep)
 
 $(sdl_audio_o): $(sdl_audio_c) $(sdl_audio_dep)
 	@echo "\n  sdl_audio"
-	$(GPP) -o $@ -c $< $(SDL2)
+	$(GPP) -o $@ -c $< $(SDL2) $(SDL_AUDIO)
 
 
 $(image_o): $(image_c) $(image_dep)
@@ -201,7 +202,7 @@ $(app_o): $(app_c) $(app_dep)
 	$(GPP) -o $@ -c $< $(NO_FLAGS)
 
 
-$(program_exe): $(object_files)
+$(program_exe): $(obj)
 	@echo "\n  program_exe"
 	$(GPP) -o $@ $+ $(ALL_LFLAGS)
 
